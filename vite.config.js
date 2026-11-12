@@ -1,11 +1,13 @@
 import { defineConfig } from 'vite';
+import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
   plugins: [
+    tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
-      includeAssets: ['icons/icon-192.svg', 'icons/icon-512.svg'],
+      manifestFilename: 'manifest.json',
       manifest: {
         name: 'Viseu Quest',
         short_name: 'Viseu Quest',
@@ -30,7 +32,7 @@ export default defineConfig({
         ]
       },
       workbox: {
-        globPatterns: ['**/*.{html,js,css,svg,woff2}'],
+        globPatterns: ['**/*.{html,js,css,svg,wasm,woff2}'],
         navigateFallback: '/index.html',
         runtimeCaching: [
           {
@@ -54,6 +56,20 @@ export default defineConfig({
               cacheName: 'google-fonts-webfonts',
               expiration: {
                 maxEntries: 16,
+                maxAgeSeconds: 60 * 60 * 24 * 365
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          },
+          {
+            urlPattern: /\.riv(?:\?.*)?$/i,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'rive-animations',
+              expiration: {
+                maxEntries: 24,
                 maxAgeSeconds: 60 * 60 * 24 * 365
               },
               cacheableResponse: {

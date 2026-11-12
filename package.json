@@ -9,7 +9,13 @@
     "preview": "vite preview"
   },
   "devDependencies": {
+    "@tailwindcss/vite": "^4.3.5",
+    "tailwindcss": "^4.3.5",
     "vite": "^6.4.1",
     "vite-plugin-pwa": "^0.21.1"
+  },
+  "dependencies": {
+    "@rive-app/canvas": "^2.50.0",
+    "@supabase/supabase-js": "^2.119.0"
   }
 }

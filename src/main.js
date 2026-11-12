@@ -1,5 +1,7 @@
 import './style.css';
+import './studio-shop.css';
 import { registerSW } from 'virtual:pwa-register';
+import { initializeStudioShop } from './studio-shop.js';
 
 registerSW({ immediate: true });
 
@@ -610,4 +612,10 @@ registerSW({ immediate: true });
     $('#shopMsg').textContent = 'Now wearing ' + k.name; blip([660, 880, 1100], .08); confetti(40);
   }
   renderHud(); renderDock(); renderGrid(); renderItems(); renderShop(); applySkin(); updateCompass();
+  initializeStudioShop().catch(function (error) {
+    console.error('Studio Shop initialization failed.', error);
+    var status = document.querySelector('#studioShopStatus');
+    status.textContent = 'Studio Shop could not initialize. Reload and try again.';
+    status.classList.add('is-error');
+  });
 })();
