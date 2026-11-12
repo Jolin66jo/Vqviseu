@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#d9f3ff">
+  <meta name="description" content="Walk the old town, check in at landmarks, and collect stamps.">
+  <title>Viseu Quest</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Nunito:wght@500;600;700;800&display=swap">
+</head>
+<body>
+  <div id="app">
+<div class="wrap">
+  <div class="hud">
+    <div class="brand">
+      <h1>Viseu <span>Quest</span></h1>
+      <p>Walk the old town, check in at landmarks, collect stamps.</p>
+    </div>
+    <div class="chips">
+      <div class="chip lvl" title="Level"><span class="dot" style="background:#ffe3a0"><svg width="16" height="16" viewBox="-10 -10 20 20" aria-hidden="true"><path d="M0 -9 L2.7 -3 9 -2.4 4.3 1.8 5.6 8 0 4.9 -5.6 8 -4.3 1.8 -9 -2.4 -2.7 -3Z" fill="#ff9f1c"/></svg></span>
+        <span class="meta"><b id="lvlName">Curious Visitor</b><span class="bar"><i id="xpFill"></i></span></span></div>
+      <div class="chip" title="Viseu coins"><span class="dot" style="background:#fff1c7"><svg width="18" height="18" viewBox="-10 -10 20 20" aria-hidden="true"><circle r="8" fill="#ffc93c" stroke="#e59a00" stroke-width="2"/><rect x="-1.5" y="-4" width="3" height="8" rx="1" fill="#e59a00"/></svg></span><span id="coinN">0</span></div>
+      <div class="chip" title="Stamps"><span class="dot" style="background:#e9e3ff"><svg width="18" height="18" viewBox="-10 -10 20 20" aria-hidden="true"><circle r="8" fill="none" stroke="#7a5cff" stroke-width="2.5" stroke-dasharray="3 2"/><circle r="3" fill="#7a5cff"/></svg></span><span id="stampN">0/8</span></div>
+      <div class="chip" title="Quest compass"><span class="dot" style="background:#dbe8ff"><svg id="needle" width="22" height="22" viewBox="-12 -12 24 24" aria-hidden="true"><circle r="10" fill="#fff" stroke="#1f5fbf" stroke-width="2"/><path d="M0 -8 L3.5 2 L0 0 L-3.5 2Z" fill="#e2703a"/><path d="M0 8 L3.5 -2 L0 0 L-3.5 -2Z" fill="#1f5fbf"/></svg></span><span id="compTxt">-</span></div>
+      <button class="chip sound" id="snd" type="button" aria-label="Sound on" aria-pressed="true"><svg width="22" height="22" viewBox="0 0 24 24" aria-hidden="true"><path d="M3 9v6h4l5 4V5L7 9z" fill="#1d2a4a"/><path id="sndWave" d="M15.5 8.5a5 5 0 0 1 0 7M18 6a8.5 8.5 0 0 1 0 12" fill="none" stroke="#1d2a4a" stroke-width="2" stroke-linecap="round"/></svg></button>
+    </div>
+  </div>
+
+  <div class="azul" aria-hidden="true"></div>
+
+  <div class="mapframe">
+    <svg id="map" viewBox="0 0 1000 680" role="application" tabindex="0" aria-label="Stylised map of Viseu. Tap a place to walk there, or use the arrow keys."></svg>
+    <div class="hint">Tap the map to walk, or use arrow keys. Stylised map, not to scale.</div>
+  </div>
+
+  <section class="dock" id="dock" aria-live="polite"></section>
+
+  <section class="passport" aria-labelledby="pp">
+    <header><h2 id="pp">Viseu passport</h2><span id="ppCount">0 of 8 stamps</span></header>
+    <div class="grid" id="grid"></div>
+  </section>
+
+  <section class="passport" aria-labelledby="col">
+    <header><h2 id="col">Collection</h2><span id="colCount"></span></header>
+    <div class="grid" id="items"></div>
+  </section>
+
+  <section class="passport" aria-labelledby="shp">
+    <header><h2 id="shp">Avatar shop</h2><span id="shopMsg" aria-live="polite">Spend your Viseu coins</span></header>
+    <div class="grid" id="shop"></div>
+  </section>
+
+  <div class="foot">
+    <span class="mbv">Made in Viseu, Portugal</span>
+    <span>Progress is saved in this browser only.</span>
+    <button type="button" id="reset">Start over</button>
+  </div>
+</div>
+
+<div class="overlay" id="modal" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mTitle">
+    <button class="x" id="mClose" type="button" aria-label="Close">&times;</button>
+    <div id="mBody"></div>
+  </div>
+</div>
+<div class="banner" id="banner" role="status"></div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+<div class="sr" id="live" aria-live="polite"></div>
+
+  </div>
+  <script type="module" src="/src/main.js"></script>
+</body>
+</html>
