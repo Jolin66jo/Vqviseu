@@ -11,6 +11,7 @@ purchases use the separate, server-authoritative Supabase profile wallet.
 - [x] Vite production build, installable PWA manifest/icons, automatic service-worker updates, and offline app-shell caching.
 - [x] Preserve the original SVG map, landmark quests, avatar, collectibles, passport, localStorage key, and existing avatar shop.
 - [x] Responsive home map and fixed, safe-area-aware bottom navigation for Map, Passport, Collection, Avatar, and Studio.
+- [x] English and European Portuguese language selector for the main navigation, quick tour, key game screens, landmark quizzes, trails, map controls, and Studio Shop interface; language preference is stored separately from game progress.
 - [x] Accessible slide-up screens for Passport, Collection, Avatar Shop, and Studio Shop; full-screen map uses the same live player/map state.
 - [x] Add an OpenStreetMap street-map view centered on Viseu while preserving the original illustrated game map and its gameplay.
 - [x] Add five Viseu city-map coin discoveries linked to existing landmark quests; claims add coins, XP, collection status, daily challenge progress, and trail progress to the existing local save.
@@ -37,6 +38,12 @@ npm run dev
 Set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` in `.env.local` to connect
 the Studio Shop. Without them, the drawer runs in preview mode and does not
 perform purchases.
+
+The homepage language control switches the supported interface text between
+English and European Portuguese. It stores the choice in `viseu-quest-lang`;
+game progress remains under `viseu-quest-v1`. Product copy supplied by a
+configured Supabase catalog is managed by that catalog and may need its own
+Portuguese content.
 
 ## Production
 

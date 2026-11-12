@@ -11,8 +11,540 @@ registerSW({ immediate: true });
   'use strict';
   var NS = 'http://www.w3.org/2000/svg';
   var KEY = 'viseu-quest-v1';
+  var LANG_KEY = 'viseu-quest-lang';
+  var locale = 'en';
+  try {
+    var savedLocale = localStorage.getItem(LANG_KEY);
+    if (savedLocale === 'en' || savedLocale === 'pt') locale = savedLocale;
+  } catch (error) {
+    console.warn('Viseu Quest language preference could not be loaded.', error);
+  }
   var RM = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
   var INK = '#1d2a4a';
+  var I18N = {
+    en: {
+      'tour.eyebrow': 'LEARN THE GAME',
+      'tour.title': 'Quick tour',
+      'tour.subtitle': 'See what each section is for and how the adventure works.',
+      'tour.button': 'Quick tour',
+      'account.eyebrow': 'KEEP PLAYING',
+      'account.title': 'Studio account',
+      'account.subtitle': 'Sign in to manage your Studio wallet and purchases. Game progress stays on this device.',
+      'account.button': 'Sign up / Log in',
+      'account.aria': 'Studio account access',
+      'language.aria': 'Language selector',
+      'tour.step.map': 'Map',
+      'tour.step.profile': 'Profile',
+      'tour.step.trails': 'Trails',
+      'tour.step.passport': 'Passport',
+      'tour.step.collection': 'Collection',
+      'tour.step.avatar': 'Avatar',
+      'tour.step.studio': 'Studio',
+      'tour.step.map.detail': 'The map is your city guide. Tap a landmark, walk to it, and unlock that area’s stamp and quick quiz.',
+      'tour.step.profile.detail': 'Your profile holds your explorer name, badge, and map privacy settings. Turn on location only when you want it shown on the city map.',
+      'tour.step.trails.detail': 'Trails turn your adventure into challenges: stamps, quizzes, collectible finds, and longer streaks build your progress.',
+      'tour.step.passport.detail': 'The passport keeps a running record of every landmark you collect so you can see which stops are done and still open.',
+      'tour.step.collection.detail': 'Collections track rewards, collectibles, discovery coins, and souvenirs from the places you visit around Viseu.',
+      'tour.step.avatar.detail': 'Spend coins in the avatar shop to change your explorer look and dress up your in-game identity.',
+      'tour.step.studio.detail': 'The Studio shop is where you browse new art, founder perks, and special digital products built for the Viseu world.',
+      'tour.back': 'Back',
+      'tour.next': 'Next step',
+      'tour.finish': 'Finish tour',
+      'tour.goto': 'Go to {label} step',
+      'nav.map': 'Map',
+      'nav.profile': 'Profile',
+      'nav.trails': 'Trails',
+      'nav.passport': 'Passport',
+      'nav.collection': 'Collection',
+      'nav.avatar': 'Avatar',
+      'nav.studio': 'Studio',
+      'nav.main': 'Main navigation',
+      'home.tagline': 'Walk the old town, check in at landmarks, collect stamps.',
+      'map.hint': 'Tap the map to explore in full screen. Stylised map, not to scale.',
+      'map.switch.game': 'Use game map',
+      'map.switch.city': 'Use city map',
+      'map.switch.street': 'Use street map',
+      'map.unavailable': 'Street map unavailable',
+      'map.loaderror': 'Street map could not load. Your illustrated game map is still available.',
+      'map.fullscreen.hint': 'Tap a gold pin to collect a coin or explore its landmark in the game map.',
+      'map.locate': 'Locate me',
+      'map.close': 'Close map',
+      'map.close.label': 'Close full-screen map',
+      'map.aria': 'Stylised map of Viseu. Tap a place to walk there, or use the arrow keys.',
+      'map.city.aria': 'Interactive street map centered on Viseu',
+      'home.made': 'Made in Viseu, Portugal',
+      'home.reset': 'Start over',
+      'screen.adventure': 'YOUR ADVENTURE',
+      'screen.passport': 'Viseu Passport',
+      'screen.passport.close': 'Close passport',
+      'screen.profile': 'Your Profile',
+      'screen.profile.close': 'Close profile',
+      'profile.explorer': 'Explorer name',
+      'profile.name.placeholder': 'Curious Visitor',
+      'profile.badge': 'Profile badge',
+      'profile.badge.choose': 'Choose profile badge',
+      'profile.badge.compass': 'Compass',
+      'profile.badge.star': 'Star',
+      'profile.badge.leaf': 'Leaf',
+      'profile.badge.castle': 'Castle',
+      'profile.mapprivacy': 'Map & privacy',
+      'profile.device': 'Saved on this device',
+      'profile.location': 'Allow location on city map',
+      'profile.location.help': 'Off by default. Location is requested only when you tap “Locate me” and stays on this device.',
+      'profile.approx': 'Approximate location',
+      'profile.approx.help': 'Show a coarse area instead of your precise position.',
+      'profile.audience': 'Who can see you?',
+      'profile.audience.help': 'Preference for a future friends feature.',
+      'profile.onlyme': 'Only me',
+      'profile.friends': 'Friends',
+      'profile.selected': 'Selected friends',
+      'profile.health': 'Steps & reminders',
+      'profile.health.help': 'Step syncing needs Apple Health or Health Connect and a native companion. GPS is used only on the city map after you opt in; it is not saved or sent to Viseu Quest.',
+      'profile.health.button': 'View health-sync setup',
+      'screen.trails.eyebrow': 'DISCOVER VISEU',
+      'screen.trails': 'Viseu Trails',
+      'screen.trails.close': 'Close trails',
+      'screen.trails.intro': 'Complete trail challenges with the places, quizzes, and collectibles in this game. No steps or GPS are tracked.',
+      'daily.title': 'Today’s adventure',
+      'daily.streak': '{count}-day streak',
+      'daily.best': ' · best {count}',
+      'daily.headline.perfect': 'Perfect week!',
+      'daily.headline.checked': 'You checked in today',
+      'daily.headline.default': 'A little progress adds up',
+      'daily.subline.perfect': 'Seven check-ins in a row · +50 coins and +30 XP',
+      'daily.subline.checked': 'Nice work. Your streak is safe for today.',
+      'daily.subline.default': 'Check in when you are ready. No streak loss or penalty.',
+      'daily.claimed': 'Claimed today',
+      'daily.claim': 'Claim check-in · +10 coins',
+      'screen.collection': 'Collection',
+      'screen.collection.close': 'Close collection',
+      'collection.city': 'City map discoveries',
+      'screen.avatar.eyebrow': 'CUSTOMIZE YOUR EXPLORER',
+      'screen.avatar': 'Avatar Shop',
+      'screen.avatar.close': 'Close avatar shop',
+      'avatar.spend': 'Spend your Viseu coins',
+      'studio.close': 'Close Studio Shop',
+      'studio.eyebrow': 'MADE IN VISEU STUDIO',
+      'studio.title': 'Little things, big adventures.',
+      'studio.subtitle': 'A colorful collection from Viseu creators.',
+      'studio.balance': 'YOUR BALANCE',
+      'studio.coins': 'Viseu Coins',
+      'studio.signin': 'Sign in',
+      'studio.signout': 'Sign out',
+      'studio.email.label': 'Sign in with an email link',
+      'studio.email.send': 'Send link',
+      'studio.category.all': 'All',
+      'studio.category.founder': 'Founder Pass',
+      'studio.category.art': 'Grão Vasco Art Packs',
+      'studio.category.streak': 'Streak Boosts',
+      'studio.footnote': 'Purchases are secured by Stripe. Digital items stay in your collection.',
+      'modal.close': 'Close',
+      'sound.on': 'Sound on',
+      'sound.off': 'Sound off',
+      'count.stamps': '{count} of 8 stamps',
+      'reward.stamp': 'Stamp collected',
+      'reward.coins': 'coins',
+      'crate.title': 'A tile crate!',
+      'crate.reveal': 'You reached {name}. Open the crate to reveal your stamp.',
+      'crate.open': 'Open the crate',
+      'quiz.feedback.correct': 'Correct! +20 coins and +20 XP',
+      'quiz.feedback.incorrect': 'Not quite. The answer glows green.',
+      'quiz.keep': 'Keep exploring',
+      'stamp.all': 'All stamps!',
+      'reward.chest': 'Treasure chest! +100 coins',
+      'reward.legend': 'Viseu Legend +100 coins',
+      'reward.level': 'Level {level}: {title}',
+      'level.1': 'Curious Visitor',
+      'level.2': 'Street Wanderer',
+      'level.3': 'Local Guide',
+      'level.4': 'Hilltop Hero',
+      'level.5': 'Viseu Legend',
+      'dock.welcome': 'Welcome back to {name}',
+      'dock.at': 'You’re at {name}',
+      'dock.stamp.quiz': 'Stamp collected and quiz done.',
+      'dock.stamp.pending': 'Stamp collected. Quiz still open for bonus coins.',
+      'dock.checkin': 'Check in to earn a stamp, XP and coins.',
+      'dock.open': 'Open',
+      'dock.checkin.button': 'Check in',
+      'dock.legend': 'Viseu Legend!',
+      'dock.allstamps': 'All 8 stamps collected. Keep wandering for leftover coins and grapes.',
+      'dock.next': 'Next stop: {name}',
+      'dock.steps': 'About {count} steps away. Pick up coins on the way.',
+      'dock.walk': 'Walk there',
+      'stamp.quiz.done': 'Stamped, quiz done',
+      'stamp.done': 'Stamped',
+      'stamp.notvisited': 'Not visited yet',
+      'action.startover.confirm': 'Tap again to erase all progress',
+      'daily.challenge.pickups': 'Find 3 map collectibles',
+      'daily.challenge.stamp': 'Earn a landmark stamp',
+      'daily.challenge.quiz': 'Finish a landmark quiz',
+      'daily.challenge.checkin': 'Claim today’s check-in',
+      'daily.challenge.collect-five': 'Find 5 collectibles today',
+      'daily.challenge.claimed': 'Claimed',
+      'daily.challenge.claim': 'Claim',
+      'daily.challenge.progress': 'In progress',
+      'trail.unlocked': 'Viseu Trail',
+      'trail.locked': 'LOCKED CHAPTER',
+      'trail.claimed': 'Sticker claimed',
+      'trail.complete': 'Complete {required} of {total} to claim the chapter reward',
+      'trail.previous': 'Claim the previous chapter reward to continue',
+      'trail.sticker.collected': 'Sticker collected',
+      'trail.sticker.claim': 'Claim chapter sticker · +50 coins',
+      'trail.keep': 'Keep exploring',
+      'collection.picked': '{found} of {total} picked up on the map',
+      'collection.discovered': '{found} of {total} discovered',
+      'collection.notfound': 'Not found yet',
+      'avatar.wearing': 'Wearing',
+      'avatar.owned': 'Owned',
+      'avatar.buy': 'Buy',
+      'avatar.wear': 'Wear',
+      'avatar.need': 'Need {count} more coins for {name}',
+      'avatar.nowwearing': 'Now wearing {name}',
+      'action.quiz': 'Quick quiz: +20 coins',
+      'action.later': 'Later',
+      'action.close': 'Close',
+      'action.quizkeep': 'Keep exploring',
+      'quiz.title': 'Quick quiz',
+      'quiz.correct': 'Correct! +20 coins and +20 XP',
+      'quiz.incorrect': 'Not quite. The answer glows green.',
+      'map.item.discovered': 'Discovered',
+      'map.item.notfound': 'Not found',
+      'live.discovered': 'Discovered {name}: +{coins} Viseu coins and {xp} XP',
+      'live.exploring': 'Exploring {name} in the game map.',
+      'live.found': 'Found {name}, plus {coins} coins',
+      'storage.error': 'Progress could not be saved on this device. Check browser storage settings.',
+      'health.unavailable': 'Health sync is not available in this web app. No health data is collected.',
+      'health.title': 'Steps & reminders',
+      'daily.earned': 'Claimed today',
+      'trail.chapter.cava': 'Chapter 1 · Cava de Viriato',
+      'trail.chapter.fontelo': 'Chapter 2 · Parque do Fontelo',
+      'trail.chapter.cathedral': 'Chapter 3 · Sé & Centro Histórico',
+      'trail.chapter.ecopista': 'Chapter 4 · Ecopista do Dão',
+      'trail.sticker.cava': 'Viriato Warrior',
+      'trail.sticker.fontelo': 'Fontelo Woods',
+      'trail.sticker.cathedral': 'Granite Cathedral',
+      'trail.sticker.ecopista': 'Dão Greenway',
+      'trail.task.cava-stamp': 'Collect the Cava de Viriato stamp',
+      'trail.task.cava-pickups': 'Find 5 map collectibles',
+      'trail.task.cava-coins': 'Find 3 Viseu coins on the map',
+      'trail.task.cava-quiz': 'Finish a landmark quiz',
+      'trail.task.cava-checkin': 'Claim a daily check-in',
+      'trail.task.fontelo-stamp': 'Collect the Fontelo stamp',
+      'trail.task.fontelo-park': 'Visit Parque Aquilino Ribeiro',
+      'trail.task.fontelo-pickups': 'Find 10 map collectibles',
+      'trail.task.fontelo-quizzes': 'Finish 2 landmark quizzes',
+      'trail.task.fontelo-streak': 'Build a 2-day check-in streak',
+      'trail.task.cathedral-se': 'Collect the Sé Catedral stamp',
+      'trail.task.cathedral-gv': 'Visit Museu Grão Vasco',
+      'trail.task.cathedral-mis': 'Visit Igreja da Misericórdia',
+      'trail.task.cathedral-quizzes': 'Finish 3 landmark quizzes',
+      'trail.task.cathedral-streak': 'Build a 3-day check-in streak',
+      'trail.task.ecopista-aq': 'Visit Parque Aquilino Ribeiro',
+      'trail.task.ecopista-rossio': 'Visit Praça da República',
+      'trail.task.ecopista-soar': 'Visit Porta do Soar',
+      'trail.task.ecopista-collect': 'Find 20 map collectibles',
+      'trail.task.ecopista-streak': 'Build a 7-day check-in streak',
+      'item.coin': 'Viseu coin',
+      'item.grape': 'Dão grapes',
+      'item.chestnut': 'Castanhas',
+      'item.tile': 'Azulejo tile',
+      'item.flower': 'Garden flower',
+      'item.shield': 'Viriato’s shield',
+      'item.dice': 'Mystery dice',
+      'item.compass': 'Golden compass',
+      'item.token': 'Game token',
+      'shop.skin.cap': 'Sunny cap',
+      'shop.skin.viriato': 'Viriato helm',
+      'shop.skin.dao': 'Dão wine',
+      'shop.skin.azulejo': 'Azulejo blue'
+    },
+    pt: {
+      'tour.eyebrow': 'APRENDA O JOGO',
+      'tour.title': 'Visita rápida',
+      'tour.subtitle': 'Descobre para que serve cada secção e como funciona a aventura.',
+      'tour.button': 'Visita rápida',
+      'account.eyebrow': 'CONTINUA A JOGAR',
+      'account.title': 'Conta Studio',
+      'account.subtitle': 'Entra para gerir a tua carteira e compras Studio. O progresso do jogo fica neste dispositivo.',
+      'account.button': 'Criar conta / Entrar',
+      'account.aria': 'Acesso à conta Studio',
+      'language.aria': 'Escolha do idioma',
+      'tour.step.map': 'Mapa',
+      'tour.step.profile': 'Perfil',
+      'tour.step.trails': 'Rotas',
+      'tour.step.passport': 'Passaporte',
+      'tour.step.collection': 'Coleção',
+      'tour.step.avatar': 'Avatar',
+      'tour.step.studio': 'Studio',
+      'tour.step.map.detail': 'O mapa é o teu guia da cidade. Toca num ponto de interesse, desloca-te até lá e desbloqueia a marca e o quiz rápido dessa zona.',
+      'tour.step.profile.detail': 'O perfil guarda o teu nome de explorador, o emblema e as definições de privacidade do mapa. Liga a localização só quando quiseres mostrá-la no mapa da cidade.',
+      'tour.step.trails.detail': 'As rotas transformam a aventura em desafios: selos, quizzes, descobertas e desafios mais longos ajudam o teu progresso.',
+      'tour.step.passport.detail': 'O passaporte guarda o registo de cada monumento que recolhes para veres quais os locais concluídos e os que ainda faltam.',
+      'tour.step.collection.detail': 'A coleção acompanha recompensas, colecionáveis, moedas de descoberta e lembranças dos lugares que visitas em Viseu.',
+      'tour.step.avatar.detail': 'Gasta moedas na loja do avatar para mudar a aparência do teu explorador e personalizar a identidade do jogo.',
+      'tour.step.studio.detail': 'A loja Studio é onde exploras arte nova, vantagens de fundador e produtos digitais especiais criados para o mundo de Viseu.',
+      'tour.back': 'Voltar',
+      'tour.next': 'Próximo passo',
+      'tour.finish': 'Terminar visita',
+      'tour.goto': 'Ir para o passo {label}',
+      'nav.map': 'Mapa',
+      'nav.profile': 'Perfil',
+      'nav.trails': 'Rotas',
+      'nav.passport': 'Passaporte',
+      'nav.collection': 'Coleção',
+      'nav.avatar': 'Avatar',
+      'nav.studio': 'Studio',
+      'nav.main': 'Navegação principal',
+      'home.tagline': 'Passeia pelo centro histórico, visita monumentos e coleciona selos.',
+      'map.hint': 'Toca no mapa para explorar em ecrã inteiro. Mapa ilustrado, não está à escala.',
+      'map.switch.game': 'Usar mapa do jogo',
+      'map.switch.city': 'Usar mapa da cidade',
+      'map.switch.street': 'Usar mapa de ruas',
+      'map.unavailable': 'Mapa de ruas indisponível',
+      'map.loaderror': 'Não foi possível carregar o mapa de ruas. O mapa ilustrado do jogo continua disponível.',
+      'map.fullscreen.hint': 'Toca num marcador dourado para recolher uma moeda ou explorar o monumento no mapa do jogo.',
+      'map.locate': 'Localizar-me',
+      'map.close': 'Fechar mapa',
+      'map.close.label': 'Fechar mapa em ecrã inteiro',
+      'map.aria': 'Mapa ilustrado de Viseu. Toca num local para caminhar até lá ou usa as setas do teclado.',
+      'map.city.aria': 'Mapa de ruas interativo centrado em Viseu',
+      'home.made': 'Feito em Viseu, Portugal',
+      'home.reset': 'Recomeçar',
+      'screen.adventure': 'A TUA AVENTURA',
+      'screen.passport': 'Passaporte de Viseu',
+      'screen.passport.close': 'Fechar passaporte',
+      'screen.profile': 'O teu perfil',
+      'screen.profile.close': 'Fechar perfil',
+      'profile.explorer': 'Nome de explorador',
+      'profile.name.placeholder': 'Visitante curioso',
+      'profile.badge': 'Emblema do perfil',
+      'profile.badge.choose': 'Escolhe o emblema do perfil',
+      'profile.badge.compass': 'Bússola',
+      'profile.badge.star': 'Estrela',
+      'profile.badge.leaf': 'Folha',
+      'profile.badge.castle': 'Castelo',
+      'profile.mapprivacy': 'Mapa e privacidade',
+      'profile.device': 'Guardado neste dispositivo',
+      'profile.location': 'Permitir localização no mapa da cidade',
+      'profile.location.help': 'Desativada por predefinição. A localização só é pedida quando tocas em “Localizar-me” e fica neste dispositivo.',
+      'profile.approx': 'Localização aproximada',
+      'profile.approx.help': 'Mostrar uma área aproximada em vez da tua posição exata.',
+      'profile.audience': 'Quem pode ver-te?',
+      'profile.audience.help': 'Preferência para uma futura funcionalidade de amigos.',
+      'profile.onlyme': 'Só eu',
+      'profile.friends': 'Amigos',
+      'profile.selected': 'Amigos selecionados',
+      'profile.health': 'Passos e lembretes',
+      'profile.health.help': 'A sincronização de passos requer Apple Health ou Health Connect e uma aplicação nativa. O GPS só é usado no mapa da cidade após a tua autorização; não é guardado nem enviado ao Viseu Quest.',
+      'profile.health.button': 'Ver configuração de sincronização',
+      'screen.trails.eyebrow': 'DESCOBRE VISEU',
+      'screen.trails': 'Rotas de Viseu',
+      'screen.trails.close': 'Fechar rotas',
+      'screen.trails.intro': 'Conclui desafios com os locais, quizzes e colecionáveis do jogo. Não são registados passos nem GPS.',
+      'daily.title': 'A aventura de hoje',
+      'daily.streak': 'sequência de {count} dias',
+      'daily.best': ' · recorde {count}',
+      'daily.headline.perfect': 'Semana perfeita!',
+      'daily.headline.checked': 'Já fizeste o check-in hoje',
+      'daily.headline.default': 'Cada passo conta',
+      'daily.subline.perfect': 'Sete check-ins seguidos · +50 moedas e +30 XP',
+      'daily.subline.checked': 'Muito bem. A tua sequência está segura por hoje.',
+      'daily.subline.default': 'Faz o check-in quando quiseres. Não há penalizações por falhar dias.',
+      'daily.claimed': 'Reclamado hoje',
+      'daily.claim': 'Fazer check-in · +10 moedas',
+      'screen.collection': 'Coleção',
+      'screen.collection.close': 'Fechar coleção',
+      'collection.city': 'Descobertas no mapa da cidade',
+      'screen.avatar.eyebrow': 'PERSONALIZA O TEU EXPLORADOR',
+      'screen.avatar': 'Loja de avatares',
+      'screen.avatar.close': 'Fechar loja de avatares',
+      'avatar.spend': 'Usa as tuas moedas de Viseu',
+      'studio.close': 'Fechar Studio Shop',
+      'studio.eyebrow': 'FEITO NO STUDIO DE VISEU',
+      'studio.title': 'Pequenos detalhes, grandes aventuras.',
+      'studio.subtitle': 'Uma coleção colorida de criadores de Viseu.',
+      'studio.balance': 'O TEU SALDO',
+      'studio.coins': 'Moedas de Viseu',
+      'studio.signin': 'Entrar',
+      'studio.signout': 'Sair',
+      'studio.email.label': 'Entrar com um link enviado por email',
+      'studio.email.send': 'Enviar link',
+      'studio.category.all': 'Tudo',
+      'studio.category.founder': 'Passe de Fundador',
+      'studio.category.art': 'Pacotes de Arte Grão Vasco',
+      'studio.category.streak': 'Bónus de Sequência',
+      'studio.footnote': 'As compras são protegidas pelo Stripe. Os artigos digitais ficam na tua coleção.',
+      'modal.close': 'Fechar',
+      'sound.on': 'Som ligado',
+      'sound.off': 'Som desligado',
+      'count.stamps': '{count} de 8 selos',
+      'reward.stamp': 'Selo recolhido',
+      'reward.coins': 'moedas',
+      'crate.title': 'Uma caixa de azulejos!',
+      'crate.reveal': 'Chegaste a {name}. Abre a caixa para revelar o teu selo.',
+      'crate.open': 'Abrir a caixa',
+      'quiz.feedback.correct': 'Correto! +20 moedas e +20 XP',
+      'quiz.feedback.incorrect': 'Não é bem isso. A resposta correta está a verde.',
+      'quiz.keep': 'Continuar a explorar',
+      'stamp.all': 'Todos os selos!',
+      'reward.chest': 'Baú do tesouro! +100 moedas',
+      'reward.legend': 'Lenda de Viseu +100 moedas',
+      'reward.level': 'Nível {level}: {title}',
+      'level.1': 'Visitante curioso',
+      'level.2': 'Explorador urbano',
+      'level.3': 'Guia local',
+      'level.4': 'Herói da colina',
+      'level.5': 'Lenda de Viseu',
+      'dock.welcome': 'Bem-vindo de volta a {name}',
+      'dock.at': 'Estás em {name}',
+      'dock.stamp.quiz': 'Selo recolhido e quiz concluído.',
+      'dock.stamp.pending': 'Selo recolhido. Ainda podes fazer o quiz para ganhar moedas extra.',
+      'dock.checkin': 'Faz check-in para ganhar um selo, XP e moedas.',
+      'dock.open': 'Abrir',
+      'dock.checkin.button': 'Fazer check-in',
+      'dock.legend': 'Lenda de Viseu!',
+      'dock.allstamps': 'Recolheste os 8 selos. Continua a explorar para encontrar moedas e uvas.',
+      'dock.next': 'Próxima paragem: {name}',
+      'dock.steps': 'A cerca de {count} passos. Recolhe moedas pelo caminho.',
+      'dock.walk': 'Caminhar até lá',
+      'stamp.quiz.done': 'Selo e quiz concluídos',
+      'stamp.done': 'Selo recolhido',
+      'stamp.notvisited': 'Ainda não visitado',
+      'action.startover.confirm': 'Toca novamente para apagar todo o progresso',
+      'daily.challenge.pickups': 'Encontra 3 colecionáveis no mapa',
+      'daily.challenge.stamp': 'Ganha um selo de monumento',
+      'daily.challenge.quiz': 'Conclui um quiz de monumento',
+      'daily.challenge.checkin': 'Reclama o check-in de hoje',
+      'daily.challenge.collect-five': 'Encontra 5 colecionáveis hoje',
+      'daily.challenge.claimed': 'Reclamado',
+      'daily.challenge.claim': 'Reclamar',
+      'daily.challenge.progress': 'Em progresso',
+      'trail.unlocked': 'Rota de Viseu',
+      'trail.locked': 'CAPÍTULO BLOQUEADO',
+      'trail.claimed': 'Autocolante reclamado',
+      'trail.complete': 'Conclui {required} de {total} para reclamar a recompensa do capítulo',
+      'trail.previous': 'Reclama a recompensa do capítulo anterior para continuar',
+      'trail.sticker.collected': 'Autocolante recolhido',
+      'trail.sticker.claim': 'Reclamar autocolante · +50 moedas',
+      'trail.keep': 'Continua a explorar',
+      'collection.picked': '{found} de {total} recolhidos no mapa',
+      'collection.discovered': '{found} de {total} descobertos',
+      'collection.notfound': 'Ainda não encontrado',
+      'avatar.wearing': 'A usar',
+      'avatar.owned': 'Adquirido',
+      'avatar.buy': 'Comprar',
+      'avatar.wear': 'Usar',
+      'avatar.need': 'Faltam {count} moedas para {name}',
+      'avatar.nowwearing': 'Agora estás a usar {name}',
+      'action.quiz': 'Quiz rápido: +20 moedas',
+      'action.later': 'Mais tarde',
+      'action.close': 'Fechar',
+      'action.quizkeep': 'Continuar a explorar',
+      'quiz.title': 'Quiz rápido',
+      'quiz.correct': 'Correto! +20 moedas e +20 XP',
+      'quiz.incorrect': 'Não é bem isso. A resposta correta está a verde.',
+      'map.item.discovered': 'Descoberto',
+      'map.item.notfound': 'Ainda não encontrado',
+      'live.discovered': 'Descoberta: {name} · +{coins} moedas de Viseu e +{xp} XP',
+      'live.exploring': 'A explorar {name} no mapa do jogo.',
+      'live.found': 'Encontraste {name} e mais {coins} moedas',
+      'storage.error': 'Não foi possível guardar o progresso neste dispositivo. Verifica as definições de armazenamento do navegador.',
+      'health.unavailable': 'A sincronização de saúde não está disponível nesta aplicação web. Não são recolhidos dados de saúde.',
+      'health.title': 'Passos e lembretes',
+      'daily.earned': 'Reclamado hoje'
+      ,'trail.chapter.cava': 'Capítulo 1 · Cava de Viriato',
+      'trail.chapter.fontelo': 'Capítulo 2 · Parque do Fontelo',
+      'trail.chapter.cathedral': 'Capítulo 3 · Sé e Centro Histórico',
+      'trail.chapter.ecopista': 'Capítulo 4 · Ecopista do Dão',
+      'trail.sticker.cava': 'Guerreiro Viriato',
+      'trail.sticker.fontelo': 'Bosques do Fontelo',
+      'trail.sticker.cathedral': 'Catedral de Granito',
+      'trail.sticker.ecopista': 'Ecopista do Dão',
+      'trail.task.cava-stamp': 'Recolhe o selo da Cava de Viriato',
+      'trail.task.cava-pickups': 'Encontra 5 colecionáveis no mapa',
+      'trail.task.cava-coins': 'Encontra 3 moedas de Viseu no mapa',
+      'trail.task.cava-quiz': 'Conclui um quiz de monumento',
+      'trail.task.cava-checkin': 'Reclama um check-in diário',
+      'trail.task.fontelo-stamp': 'Recolhe o selo do Fontelo',
+      'trail.task.fontelo-park': 'Visita o Parque Aquilino Ribeiro',
+      'trail.task.fontelo-pickups': 'Encontra 10 colecionáveis no mapa',
+      'trail.task.fontelo-quizzes': 'Conclui 2 quizzes de monumentos',
+      'trail.task.fontelo-streak': 'Cria uma sequência de check-in de 2 dias',
+      'trail.task.cathedral-se': 'Recolhe o selo da Sé Catedral',
+      'trail.task.cathedral-gv': 'Visita o Museu Grão Vasco',
+      'trail.task.cathedral-mis': 'Visita a Igreja da Misericórdia',
+      'trail.task.cathedral-quizzes': 'Conclui 3 quizzes de monumentos',
+      'trail.task.cathedral-streak': 'Cria uma sequência de check-in de 3 dias',
+      'trail.task.ecopista-aq': 'Visita o Parque Aquilino Ribeiro',
+      'trail.task.ecopista-rossio': 'Visita a Praça da República',
+      'trail.task.ecopista-soar': 'Visita a Porta do Soar',
+      'trail.task.ecopista-collect': 'Encontra 20 colecionáveis no mapa',
+      'trail.task.ecopista-streak': 'Cria uma sequência de check-in de 7 dias',
+      'item.coin': 'Moeda de Viseu',
+      'item.grape': 'Uvas do Dão',
+      'item.chestnut': 'Castanhas',
+      'item.tile': 'Azulejo',
+      'item.flower': 'Flor de jardim',
+      'item.shield': 'Escudo de Viriato',
+      'item.dice': 'Dado misterioso',
+      'item.compass': 'Bússola dourada',
+      'item.token': 'Ficha de jogo',
+      'shop.skin.cap': 'Boné solarengo',
+      'shop.skin.viriato': 'Elmo de Viriato',
+      'shop.skin.dao': 'Vinho do Dão',
+      'shop.skin.azulejo': 'Azul azulejo'
+    }
+  };
+  function t(key) { return (I18N[locale] && I18N[locale][key]) || I18N.en[key] || key; }
+  function tKey(key, fallback) {
+    var localized = t(key);
+    return localized === key ? fallback : localized;
+  }
+  function tr(key, values) {
+    return t(key).replace(/\{(\w+)\}/g, function (match, name) {
+      return values && values[name] !== undefined ? values[name] : match;
+    });
+  }
+  function setLocale(nextLocale) {
+    if (!I18N[nextLocale]) return;
+    locale = nextLocale;
+    try { localStorage.setItem(LANG_KEY, locale); } catch (e) {}
+    document.querySelectorAll('[data-i18n]').forEach(function (el) {
+      var key = el.getAttribute('data-i18n');
+      el.textContent = t(key);
+    });
+    document.querySelectorAll('[data-i18n-attr]').forEach(function (el) {
+      var mappings = el.getAttribute('data-i18n-attr').split(',');
+      mappings.forEach(function (mapping) {
+        var parts = mapping.split(':');
+        if (parts.length === 2) el.setAttribute(parts[0], t(parts[1]));
+      });
+    });
+    document.documentElement.lang = locale === 'pt' ? 'pt-PT' : 'en';
+    document.querySelectorAll('.lang-btn').forEach(function (button) {
+      var active = button.getAttribute('data-lang') === locale;
+      button.classList.toggle('is-active', active);
+      button.setAttribute('aria-pressed', active ? 'true' : 'false');
+    });
+    window.dispatchEvent(new CustomEvent('viseu:languagechange', { detail: { locale: locale } }));
+    if (typeof renderHud === 'function') renderHud();
+    if (typeof renderDock === 'function') renderDock();
+    if (typeof renderGrid === 'function') renderGrid();
+    if (typeof renderDaily === 'function') renderDaily();
+    if (typeof renderTrails === 'function') renderTrails();
+    if (typeof renderItems === 'function') renderItems();
+    if (typeof renderShop === 'function') renderShop();
+    if (typeof renderProfile === 'function') renderProfile();
+    if (typeof SPOTS !== 'undefined' && typeof spotEls !== 'undefined') {
+      SPOTS.forEach(function (spot) {
+        var label = spotEls[spot.id] && spotEls[spot.id].querySelector('text');
+        if (label) label.textContent = spotText(spot, 'name');
+      });
+    }
+    if (modalOpen && mBody && mBody.innerHTML.indexOf('quick-tour-wrap') !== -1) {
+      renderQuickTour(quickTourIndex);
+    }
+  }
   var $ = function (s) { return document.querySelector(s); };
   function el(tag, attrs, parent) {
     var e = document.createElementNS(NS, tag);
@@ -48,6 +580,19 @@ registerSW({ immediate: true });
       fact: 'An eight-sided earthwork at the edge of town, linked by tradition to the Lusitanian leader Viriato.',
       q: 'What shape is the Cava de Viriato?', o: ['Octagon', 'Circle', 'Triangle'], a: 0 }
   ];
+  var SPOT_PT = {
+    se: { name: 'Sé Catedral', fact: 'A Sé de Viseu domina uma praça no alto da colina. No interior, observa as nervuras de pedra da abóbada, esculpidas como cordas torcidas.', q: 'Qual é o estilo da famosa abóbada com aspeto de cordas?', o: ['Manuelino', 'Art Déco', 'Brutalista'] },
+    gv: { name: 'Museu Grão Vasco', fact: 'O museu nacional homenageia Vasco Fernandes, conhecido como Grão Vasco, uma referência da pintura portuguesa do século XVI.', q: 'Grão Vasco era sobretudo…', o: ['Navegador', 'Pintor', 'Arquiteto'] },
+    mis: { name: 'Igreja da Misericórdia', fact: 'Uma igreja barroca branca do século XVIII, situada em frente à Sé Catedral.', q: 'Que monumento fica em frente à igreja?', o: ['O Paço do Fontelo', 'A Sé Catedral', 'A Cava'] },
+    soar: { name: 'Porta do Soar', fact: 'Uma porta medieval que recorda que Viseu já foi uma cidade muralhada.', q: 'A Porta do Soar fazia parte das antigas…', o: ['Linhas ferroviárias', 'Aquedutos', 'Muralhas da cidade'] },
+    rossio: { name: 'Praça da República', fact: 'O coração animado da cidade, onde as ruas se cruzam e as pessoas se reúnem à sombra das árvores.', q: 'Qual é a alcunha local desta praça?', o: ['Rossio', 'Terreiro', 'Largo da Sé'] },
+    aq: { name: 'Parque Aquilino Ribeiro', fact: 'Relvados, caminhos à sombra e bancos num parque com o nome do escritor português Aquilino Ribeiro.', q: 'Aquilino Ribeiro foi um…', o: ['Treinador de futebol', 'Escritor', 'Cozinheiro'] },
+    fon: { name: 'Parque do Fontelo', fact: 'Um grande parque junto ao Paço dos Três Escalões, antigo paço dos bispos.', q: 'O que significa “Três Escalões”?', o: ['Três degraus', 'Três torres', 'Três jardins'] },
+    cava: { name: 'Cava de Viriato', fact: 'Uma estrutura de terra octogonal nos arredores da cidade, tradicionalmente associada ao líder lusitano Viriato.', q: 'Que forma tem a Cava de Viriato?', o: ['Octógono', 'Círculo', 'Triângulo'] }
+  };
+  function spotText(spot, field) {
+    return locale === 'pt' && SPOT_PT[spot.id] ? SPOT_PT[spot.id][field] || spot[field] : spot[field];
+  }
   var ROADS = [
     [[320, 440], [400, 408], [440, 335], [500, 300], [548, 338]],
     [[500, 300], [520, 205], [560, 112]],
@@ -128,7 +673,7 @@ registerSW({ immediate: true });
     } catch (e) {
       console.warn('Viseu Quest progress could not be saved in this browser.', e);
       var live = $('#live');
-      if (live) live.textContent = 'Progress could not be saved on this device. Check browser storage settings.';
+      if (live) live.textContent = t('storage.error');
     }
   }
   function level() { return Math.floor(S.xp / 100) + 1; }
@@ -189,10 +734,10 @@ registerSW({ immediate: true });
   ];
 
   function renderProfile() {
-    var name = S.profile.name.trim() || TITLES[Math.min(level() - 1, TITLES.length - 1)];
+    var name = S.profile.name.trim() || t('level.' + Math.min(level(), TITLES.length));
     $('#profileName').value = S.profile.name;
     $('#profileAvatar').textContent = S.profile.avatar;
-    $('#profileLevel').textContent = name + ' · Level ' + level();
+    $('#profileLevel').textContent = name + ' · ' + (locale === 'pt' ? 'Nível ' : 'Level ') + level();
     $('#shareLocation').checked = S.profile.shareLocation;
     $('#approxLocation').checked = S.profile.approximateLocation;
     $('#locationAudience').value = S.profile.audience;
@@ -212,35 +757,35 @@ registerSW({ immediate: true });
     var checkedIn = S.daily.lastCheckin === day;
     var yesterday = dateKey(new Date(Date.now() - 86400000));
     var currentStreak = S.daily.lastCheckin === day || S.daily.lastCheckin === yesterday ? S.daily.streak : 0;
-    $('#streakCount').textContent = currentStreak + '-day streak' + (S.daily.bestStreak > currentStreak ? ' · best ' + S.daily.bestStreak : '');
+    $('#streakCount').textContent = tr('daily.streak', { count: currentStreak }) + (S.daily.bestStreak > currentStreak ? tr('daily.best', { count: S.daily.bestStreak }) : '');
     var perfectWeek = checkedIn && S.daily.streak > 0 && S.daily.streak % 7 === 0;
-    $('#dailyHeadline').textContent = perfectWeek ? 'Perfect week!' : checkedIn ? 'You checked in today' : 'A little progress adds up';
+    $('#dailyHeadline').textContent = perfectWeek ? t('daily.headline.perfect') : checkedIn ? t('daily.headline.checked') : t('daily.headline.default');
     $('#dailySubline').textContent = perfectWeek
-      ? 'Seven check-ins in a row · +50 coins and +30 XP'
-      : checkedIn ? 'Nice work. Your streak is safe for today.' : 'Check in when you are ready. No streak loss or penalty.';
+      ? t('daily.subline.perfect')
+      : checkedIn ? t('daily.subline.checked') : t('daily.subline.default');
     var checkin = $('#dailyCheckin');
     checkin.disabled = checkedIn;
-    checkin.textContent = checkedIn ? 'Claimed today' : 'Claim check-in · +10 coins';
+    checkin.textContent = checkedIn ? t('daily.claimed') : t('daily.claim');
     $('#dailyChallenges').innerHTML = activeDailyChallenges().map(function (challenge) {
       var progress = challenge.progress(), complete = progress >= challenge.goal, claimed = Boolean(S.daily.claims[challenge.id]);
-      return '<article class="daily-challenge' + (claimed ? ' is-claimed' : '') + '"><span class="challenge-mark">' + (claimed ? '✓' : complete ? '★' : '•') + '</span><div class="challenge-copy"><strong>' + challenge.title + '</strong><small>' + progress + '/' + challenge.goal + ' · +' + challenge.reward + ' coins · +' + challenge.xp + ' XP</small></div>' +
-        (claimed ? '<span class="challenge-done">Claimed</span>' : '<button class="challenge-claim" type="button" data-daily-claim="' + challenge.id + '"' + (complete ? '' : ' disabled') + '>' + (complete ? 'Claim' : 'In progress') + '</button>') + '</article>';
+      return '<article class="daily-challenge' + (claimed ? ' is-claimed' : '') + '"><span class="challenge-mark">' + (claimed ? '✓' : complete ? '★' : '•') + '</span><div class="challenge-copy"><strong>' + t('daily.challenge.' + challenge.id) + '</strong><small>' + progress + '/' + challenge.goal + ' · +' + challenge.reward + (locale === 'pt' ? ' moedas' : ' coins') + ' · +' + challenge.xp + ' XP</small></div>' +
+        (claimed ? '<span class="challenge-done">' + t('daily.challenge.claimed') + '</span>' : '<button class="challenge-claim" type="button" data-daily-claim="' + challenge.id + '"' + (complete ? '' : ' disabled') + '>' + (complete ? t('daily.challenge.claim') : t('daily.challenge.progress')) + '</button>') + '</article>';
     }).join('');
   }
   function renderTrails() {
     var previousComplete = true;
     $('#trailList').innerHTML = TRAILS.map(function (chapter) {
-      var tasks = chapter.tasks.map(function (task) { return { label: task.label, done: task.done() }; });
+      var tasks = chapter.tasks.map(function (task) { return { id: task.id, label: t('trail.task.' + task.id), done: task.done() }; });
       var completeCount = tasks.filter(function (task) { return task.done; }).length;
       var unlocked = previousComplete;
       var claimed = Boolean(S.trails.claimed[chapter.id]);
       var canClaim = unlocked && completeCount >= Math.ceil(tasks.length * .8);
       var required = Math.ceil(tasks.length * .8);
-      var card = '<section class="trail-card' + (unlocked ? '' : ' is-locked') + '"><header><div><span class="screen-eyebrow">' + (unlocked ? 'Viseu Trail' : 'LOCKED CHAPTER') + '</span><h3>' + chapter.title + '</h3></div><span class="trail-sticker">' + (claimed ? '✓ ' + chapter.sticker : chapter.sticker) + '</span></header>' +
-        '<p class="trail-progress-label">' + completeCount + ' of ' + tasks.length + ' challenges · ' + (claimed ? 'Sticker claimed' : unlocked ? 'Complete ' + required + ' of ' + tasks.length + ' to claim the chapter reward' : 'Claim the previous chapter reward to continue') + '</p><div class="trail-task-list">' +
+      var card = '<section class="trail-card' + (unlocked ? '' : ' is-locked') + '"><header><div><span class="screen-eyebrow">' + (unlocked ? t('trail.unlocked') : t('trail.locked')) + '</span><h3>' + t('trail.chapter.' + chapter.id) + '</h3></div><span class="trail-sticker">' + (claimed ? '✓ ' : '') + t('trail.sticker.' + chapter.id) + '</span></header>' +
+        '<p class="trail-progress-label">' + completeCount + ' / ' + tasks.length + (locale === 'pt' ? ' desafios · ' : ' challenges · ') + (claimed ? t('trail.claimed') : unlocked ? tr('trail.complete', { required: required, total: tasks.length }) : t('trail.previous')) + '</p><div class="trail-task-list">' +
         tasks.map(function (task) { return '<div class="trail-task' + (task.done ? ' is-done' : '') + '"><span>' + (task.done ? '✓' : '○') + '</span>' + task.label + '</div>'; }).join('') +
         '</div><button class="btn' + (canClaim && !claimed ? ' go' : ' ghost') + ' trail-claim" type="button" data-trail-claim="' + chapter.id + '"' + (canClaim && !claimed ? '' : ' disabled') + '>' +
-        (claimed ? 'Sticker collected' : canClaim ? 'Claim chapter sticker · +50 coins' : 'Keep exploring') + '</button></section>';
+        (claimed ? t('trail.sticker.collected') : canClaim ? t('trail.sticker.claim') : t('trail.keep')) + '</button></section>';
       previousComplete = claimed;
       return card;
     }).join('');
@@ -478,7 +1023,7 @@ registerSW({ immediate: true });
     var tk = el('g', { class: 'tick', transform: 'translate(30 -30)' }, g);
     el('circle', { r: 13, fill: '#1fbfae', stroke: '#fff', 'stroke-width': 3 }, tk);
     el('path', { d: 'M-6 0 L-2 5 L7 -5', fill: 'none', stroke: '#fff', 'stroke-width': 3.5, 'stroke-linecap': 'round', 'stroke-linejoin': 'round' }, tk);
-    var lb = el('text', { y: 52, 'text-anchor': 'middle' }, g); lb.textContent = s.name;
+    var lb = el('text', { y: 52, 'text-anchor': 'middle' }, g); lb.textContent = spotText(s, 'name');
     spotEls[s.id] = g;
   });
 
@@ -597,7 +1142,7 @@ registerSW({ immediate: true });
     mapFrame.classList.toggle('is-game-map', !useCityMap);
     map.hidden = useCityMap;
     $('#cityMap').hidden = !useCityMap;
-    $('#mapModeToggle').textContent = useCityMap ? 'Use game map' : 'Use street map';
+    $('#mapModeToggle').textContent = useCityMap ? t('map.switch.game') : t('map.switch.street');
     if (!cityMapModule) return;
     if (useCityMap) {
       cityMapModule.setCityItemsClaimed(CITY_MAP_ITEMS.filter(function (item) {
@@ -633,8 +1178,8 @@ registerSW({ immediate: true });
         console.error('Unable to load the city map.', error);
         setCityMapMode(false);
         $('#mapModeToggle').disabled = true;
-        $('#mapModeToggle').textContent = 'Street map unavailable';
-        $('#mapHint').textContent = 'Street map could not load. Your illustrated game map is still available.';
+        $('#mapModeToggle').textContent = t('map.unavailable');
+        $('#mapHint').textContent = t('map.loaderror');
       });
     } else {
       cityMapMode = false;
@@ -646,8 +1191,8 @@ registerSW({ immediate: true });
     }
     $('#mapFullscreenClose').hidden = !open;
     $('#mapHint').textContent = open
-      ? 'Tap a gold pin to collect a coin or explore its landmark in the game map.'
-      : 'Tap the map to explore in full screen. Stylised map, not to scale.';
+      ? t('map.fullscreen.hint')
+      : t('map.hint');
     if (open) {
       bodyOverflowBeforeOverlay = document.body.style.overflow;
       document.body.style.overflow = 'hidden';
@@ -679,7 +1224,8 @@ registerSW({ immediate: true });
     if (cityMapModule) {
       cityMapModule.setCityItemsClaimed(CITY_MAP_ITEMS.filter(function (candidate) { return S.got[candidate.id]; }).map(function (candidate) { return candidate.id; }));
     }
-    $('#live').textContent = 'Discovered ' + item.name + ': +' + item.v + ' Viseu coins and ' + item.xp + ' XP';
+    var itemSpot = SPOTS.filter(function (candidate) { return candidate.id === item.spotId; })[0];
+    $('#live').textContent = tr('live.discovered', { name: itemSpot ? spotText(itemSpot, 'name') : item.name, coins: item.v, xp: item.xp });
     blip([660, 880, 1100], .07);
   });
   window.addEventListener('viseu:city-item-explore', function (event) {
@@ -688,7 +1234,7 @@ registerSW({ immediate: true });
     if (!mapFullscreen || !spot) return;
     setCityMapMode(false);
     walkTo(spot.x, spot.y + 44);
-    $('#live').textContent = 'Exploring ' + spot.name + ' in the game map.';
+    $('#live').textContent = tr('live.exploring', { name: spotText(spot, 'name') });
   });
   navItems.forEach(function (item) {
     if (item.getAttribute('data-nav') === 'studio') return;
@@ -719,8 +1265,8 @@ registerSW({ immediate: true });
   });
   $('#profileName').addEventListener('input', function (ev) {
     S.profile.name = ev.target.value.slice(0, 24);
-    var name = S.profile.name.trim() || TITLES[Math.min(level() - 1, TITLES.length - 1)];
-    $('#profileLevel').textContent = name + ' · Level ' + level();
+    var name = S.profile.name.trim() || t('level.' + Math.min(level(), TITLES.length));
+    $('#profileLevel').textContent = name + ' · ' + (locale === 'pt' ? 'Nível ' : 'Level ') + level();
     save();
   });
   $('#profileAvatarChoice').addEventListener('change', function (ev) {
@@ -747,7 +1293,7 @@ registerSW({ immediate: true });
     }
   }));
   $('#healthInfo').addEventListener('click', function () {
-    $('#healthInfo').textContent = 'Health sync is not available in this web app. No health data is collected.';
+    $('#healthInfo').textContent = t('health.unavailable');
   });
   $('#dailyCheckin').addEventListener('click', claimCheckin);
   $('#dailyChallenges').addEventListener('click', function (ev) {
@@ -837,7 +1383,7 @@ registerSW({ immediate: true });
     popText(it.x, it.y, '+' + v, it.t === 'coin' ? '#e59a00' : '#7a5cff');
     burst(it.x, it.y, it.t === 'coin' ? '#ffc93c' : '#7a5cff');
     blip(it.t === 'coin' ? [880, 1320] : [660, 880, 1100], .07);
-    $('#live').textContent = 'Found ' + TYPES[it.t] + ', plus ' + v + ' coins';
+    $('#live').textContent = tr('live.found', { name: tKey('item.' + it.t, TYPES[it.t]), coins: v });
     renderHud(); renderItems();
   }
   function popText(x, y, txt, col) {
@@ -852,12 +1398,12 @@ registerSW({ immediate: true });
   /* ---------- HUD, dock, passport ---------- */
   function renderHud() {
     var lv = level();
-    $('#lvlName').textContent = 'Lv ' + lv + ' ' + TITLES[Math.min(lv - 1, TITLES.length - 1)];
+    $('#lvlName').textContent = (locale === 'pt' ? 'Nv ' : 'Lv ') + lv + ' ' + t('level.' + Math.min(lv, TITLES.length));
     $('#xpFill').style.width = (S.xp % 100) + '%';
     $('#coinN').textContent = S.coins;
     $('#stampN').textContent = stampCount() + '/8';
-    $('#ppCount').textContent = stampCount() + ' of 8 stamps';
-    var sb = $('#snd'); sb.setAttribute('aria-pressed', S.mute ? 'false' : 'true'); sb.setAttribute('aria-label', S.mute ? 'Sound off' : 'Sound on');
+    $('#ppCount').textContent = tr('count.stamps', { count: stampCount() });
+    var sb = $('#snd'); sb.setAttribute('aria-pressed', S.mute ? 'false' : 'true'); sb.setAttribute('aria-label', t(S.mute ? 'sound.off' : 'sound.on'));
     $('#sndWave').style.display = S.mute ? 'none' : '';
   }
   function nextStop() {
@@ -870,24 +1416,24 @@ registerSW({ immediate: true });
     if (s) {
       var got = S.stamps[s.id];
       h = '<svg class="ico" viewBox="-44 -44 88 88" aria-hidden="true"><g transform="scale(1.2)">' + icon(s.type, s.color) + '</g></svg>' +
-        '<div class="txt"><h2>' + (got ? 'Welcome back to ' : 'You’re at ') + s.name + '</h2><p>' + (got ? (S.quiz[s.id] ? 'Stamp collected and quiz done.' : 'Stamp collected. Quiz still open for bonus coins.') : 'Check in to earn a stamp, XP and coins.') + '</p></div>' +
-        '<button class="btn' + (got ? ' alt' : ' pulse') + '" type="button" data-act="open" data-id="' + s.id + '">' + (got ? 'Open' : 'Check in') + '</button>';
+        '<div class="txt"><h2>' + tr(got ? 'dock.welcome' : 'dock.at', { name: spotText(s, 'name') }) + '</h2><p>' + (got ? (S.quiz[s.id] ? t('dock.stamp.quiz') : t('dock.stamp.pending')) : t('dock.checkin')) + '</p></div>' +
+        '<button class="btn' + (got ? ' alt' : ' pulse') + '" type="button" data-act="open" data-id="' + s.id + '">' + (got ? t('dock.open') : t('dock.checkin.button')) + '</button>';
     } else if (stampCount() === 8) {
       h = '<svg class="ico" viewBox="-12 -12 24 24" aria-hidden="true"><path d="M0 -10 L3 -3.2 10 -2.6 4.8 2 6.2 9 0 5.5 -6.2 9 -4.8 2 -10 -2.6 -3 -3.2Z" fill="#ffc93c" stroke="#1d2a4a" stroke-width="1.2" stroke-linejoin="round"/></svg>' +
-        '<div class="txt"><h2>Viseu Legend!</h2><p>All 8 stamps collected. Keep wandering for leftover coins and grapes.</p></div>';
+        '<div class="txt"><h2>' + t('dock.legend') + '</h2><p>' + t('dock.allstamps') + '</p></div>';
     } else {
       var n = nextStop();
       h = '<svg class="ico" viewBox="-44 -44 88 88" aria-hidden="true"><g transform="scale(1.2)">' + icon(n.s.type, n.s.color) + '</g></svg>' +
-        '<div class="txt"><h2>Next stop: ' + n.s.name + '</h2><p>About ' + Math.max(1, Math.round(n.d / 9)) + ' steps away. Pick up coins on the way.</p></div>' +
-        '<button class="btn go" type="button" data-act="go" data-id="' + n.s.id + '">Walk there</button>';
+        '<div class="txt"><h2>' + tr('dock.next', { name: spotText(n.s, 'name') }) + '</h2><p>' + tr('dock.steps', { count: Math.max(1, Math.round(n.d / 9)) }) + '</p></div>' +
+        '<button class="btn go" type="button" data-act="go" data-id="' + n.s.id + '">' + t('dock.walk') + '</button>';
     }
     d.innerHTML = h;
   }
   function renderGrid() {
     $('#grid').innerHTML = SPOTS.map(function (s) {
       var got = S.stamps[s.id];
-      return '<div class="card' + (got ? ' got' : '') + '">' + stampSVG(s, !got, false) + '<div><h3>' + s.name + '</h3><p>' + (got ? (S.quiz[s.id] ? 'Stamped, quiz done' : 'Stamped') : 'Not visited yet') + '</p>' +
-        (got ? '' : '<button class="btn go" type="button" data-act="go" data-id="' + s.id + '">Walk there</button>') + '</div></div>';
+      return '<div class="card' + (got ? ' got' : '') + '">' + stampSVG(s, !got, false) + '<div><h3>' + spotText(s, 'name') + '</h3><p>' + (got ? (S.quiz[s.id] ? t('stamp.quiz.done') : t('stamp.done')) : t('stamp.notvisited')) + '</p>' +
+        (got ? '' : '<button class="btn go" type="button" data-act="go" data-id="' + s.id + '">' + t('dock.walk') + '</button>') + '</div></div>';
     }).join('');
   }
   document.addEventListener('click', function (e) {
@@ -919,9 +1465,97 @@ registerSW({ immediate: true });
   $('#mClose').addEventListener('click', closeModal);
   modal.addEventListener('pointerdown', function (e) { if (e.target === modal) closeModal(); });
 
+  var quickTourIndex = 0;
+  var QUICK_TOUR_STEPS = {
+    en: [
+      { icon: '🗺️', label: 'Map', title: 'Map', detail: 'The map is your city guide. Tap a landmark, walk to it, and unlock that area’s stamp and quick quiz.' },
+      { icon: '👤', label: 'Profile', title: 'Profile', detail: 'Your profile holds your explorer name, badge, and map privacy settings. Turn on location only when you want it shown on the city map.' },
+      { icon: '🧭', label: 'Trails', title: 'Trails', detail: 'Trails turn your adventure into challenges: stamps, quizzes, collectible finds, and longer streaks build your progress.' },
+      { icon: '📘', label: 'Passport', title: 'Passport', detail: 'The passport keeps a running record of every landmark you collect so you can see which stops are done and still open.' },
+      { icon: '🧺', label: 'Collection', title: 'Collection', detail: 'Collections track rewards, borrowed items, discovery coins, and memorabilia from the places you visit around Viseu.' },
+      { icon: '🧢', label: 'Avatar', title: 'Avatar', detail: 'Spend coins in the avatar shop to change your explorer look and dress up your in-game identity.' },
+      { icon: '🎨', label: 'Studio', title: 'Studio', detail: 'The Studio shop is where you browse new art, founder perks, and special digital products built for the Viseu world.' }
+    ],
+    pt: [
+      { icon: '🗺️', label: 'Mapa', title: 'Mapa', detail: 'O mapa é o teu guia da cidade. Toca num ponto de interesse, desloca-te até lá e desbloqueia a marca e o quiz rápido dessa zona.' },
+      { icon: '👤', label: 'Perfil', title: 'Perfil', detail: 'O perfil guarda o teu nome de explorador, o emblema e as definições de privacidade do mapa. Liga a localização só quando quiseres mostrá-la no mapa da cidade.' },
+      { icon: '🧭', label: 'Rotas', title: 'Rotas', detail: 'As rotas transformam a aventura em desafios: selos, quizzes, descobertas e desafios mais longos ajudam o teu progresso.' },
+      { icon: '📘', label: 'Passaporte', title: 'Passaporte', detail: 'O passaporte guarda o registo de cada monumento que recolhes para veres quais os locais concluídos e os que ainda faltam.' },
+      { icon: '🧺', label: 'Coleção', title: 'Coleção', detail: 'A coleção acompanha recompensas, itens, moedas de descoberta e lembranças dos lugares que visitas em Viseu.' },
+      { icon: '🧢', label: 'Avatar', title: 'Avatar', detail: 'Gasta moedas na loja do avatar para mudar a aparência do teu explorador e personalizar a identidade do jogo.' },
+      { icon: '🎨', label: 'Studio', title: 'Studio', detail: 'A loja Studio é onde exploras arte nova, vantagens de fundador e produtos digitais especiais criados para o mundo de Viseu.' }
+    ]
+  };
+  function renderQuickTour(index) {
+    quickTourIndex = index;
+    var steps = QUICK_TOUR_STEPS[locale] || QUICK_TOUR_STEPS.en;
+    var step = steps[index];
+    var isLast = index === steps.length - 1;
+    mBody.innerHTML = '<div class="quick-tour-wrap">' +
+      '<div class="quick-tour-stepper">' + steps.map(function (item, i) {
+        var state = i === index ? 'is-active' : i < index ? 'is-done' : '';
+        return '<button type="button" class="tour-step ' + state + '" data-tour-index="' + i + '" aria-label="' + tr('tour.goto', { label: item.label }) + '">' + item.icon + '</button>';
+      }).join('') + '</div>' +
+      '<div class="quick-tour-display">' +
+        '<div class="quick-tour-icon" aria-hidden="true">' + step.icon + '</div>' +
+      '</div>' +
+      '<div class="quick-tour-eyebrow">' + t('tour.step.' + ['map', 'profile', 'trails', 'passport', 'collection', 'avatar', 'studio'][index]) + ' · ' + (index + 1) + '/' + steps.length + '</div>' +
+      '<h2 id="mTitle" class="quick-tour-title">' + step.title + '</h2>' +
+      '<p class="quick-tour-copy">' + step.detail + '</p>' +
+      '<div class="quick-tour-dictionary">' + steps.map(function (item) {
+        return '<div class="quick-tour-dictionary-item"><span>' + item.icon + '</span>' + item.label + '</div>';
+      }).join('') + '</div>' +
+      '<div class="quick-tour-actions"><button class="btn ghost" type="button" data-tour-action="prev" ' + (index === 0 ? 'disabled' : '') + '>' + t('tour.back') + '</button>' +
+      '<button class="btn go" type="button" data-tour-action="next">' + (isLast ? t('tour.finish') : t('tour.next')) + '</button></div>' +
+    '</div>';
+    var focus = mBody.querySelector('.btn.go') || mBody.querySelector('.btn'); if (focus) focus.focus();
+  }
+  function openQuickTour() {
+    modalOpen = true; modal.hidden = false; quickTourIndex = 0; renderQuickTour(0); keys = {}; syncGameLoop();
+  }
+  document.addEventListener('click', function (e) {
+    var accountButton = e.target.closest && e.target.closest('.auth-button');
+    if (accountButton) {
+      window.dispatchEvent(new CustomEvent('viseu:open-studio-auth'));
+      return;
+    }
+    var quickButton = e.target.closest && e.target.closest('.quick-tour-trigger');
+    if (quickButton) {
+      openQuickTour();
+      return;
+    }
+    var langButton = e.target.closest && e.target.closest('.lang-btn');
+    if (langButton) {
+      setLocale(langButton.getAttribute('data-lang'));
+      return;
+    }
+    var tourJumper = e.target.closest && e.target.closest('[data-tour-index]');
+    if (tourJumper) {
+      renderQuickTour(Number(tourJumper.getAttribute('data-tour-index')));
+      return;
+    }
+    var tourAction = e.target.closest && e.target.closest('[data-tour-action]');
+    if (tourAction) {
+      var action = tourAction.getAttribute('data-tour-action');
+      if (action === 'prev') {
+        renderQuickTour(Math.max(0, quickTourIndex - 1));
+      } else if (action === 'next') {
+        if (quickTourIndex >= (QUICK_TOUR_STEPS[locale] || QUICK_TOUR_STEPS.en).length - 1) {
+          closeModal();
+        } else {
+          renderQuickTour(quickTourIndex + 1);
+        }
+      }
+      return;
+    }
+  });
+
   function addXp(n) {
     var before = level(); S.xp += n;
-    if (level() > before) pendingCelebrate.push('Level ' + level() + ': ' + TITLES[Math.min(level() - 1, TITLES.length - 1)]);
+    if (level() > before)     pendingCelebrate.push(tr('reward.level', {
+      level: level(),
+      title: t('level.' + Math.min(level(), TITLES.length))
+    }));
   }
   function openSpot(s) {
     var first = !S.stamps[s.id];
@@ -931,7 +1565,7 @@ registerSW({ immediate: true });
       S.items[PRIZE[s.id]] = (S.items[PRIZE[s.id]] || 0) + 1;
       spotEls[s.id].classList.add('done');
       var n = stampCount();
-      [4, 8].forEach(function (k) { if (n >= k && !S.chests[k]) { S.chests[k] = 1; S.coins += 100; pendingCelebrate.push(k === 8 ? 'All stamps! Viseu Legend +100 coins' : 'Treasure chest! +100 coins'); } });
+      [4, 8].forEach(function (k) { if (n >= k && !S.chests[k]) { S.chests[k] = 1; S.coins += 100; pendingCelebrate.push(k === 8 ? tr('stamp.all') + ' ' + t('reward.legend') : t('reward.chest')); } });
       save();
     }
     if (first) stage0(s); else stage1(s, false);
@@ -939,15 +1573,15 @@ registerSW({ immediate: true });
   }
   function stage1(s, first) {
     var qd = S.quiz[s.id];
-    mBody.innerHTML = '<div class="' + (first ? 'flipin' : '') + '">' + stampSVG(s, false, true) + '<h2 id="mTitle">' + s.name + '</h2><p class="fact">' + s.fact + '</p>' +
-      (first ? '<div class="rewards"><span class="rw">+40 XP</span><span class="rw">+10 coins</span><span class="rw b">Stamp collected</span>' + prizeChip(s) + '</div>' : '') +
-      '<div class="actions">' + (qd ? '' : '<button class="btn" type="button" id="goQuiz">Quick quiz: +20 coins</button>') + '<button class="btn ghost" type="button" id="mDone">' + (qd ? 'Close' : 'Later') + '</button></div></div>';
+    mBody.innerHTML = '<div class="' + (first ? 'flipin' : '') + '">' + stampSVG(s, false, true) + '<h2 id="mTitle">' + spotText(s, 'name') + '</h2><p class="fact">' + spotText(s, 'fact') + '</p>' +
+      (first ? '<div class="rewards"><span class="rw">+40 XP</span><span class="rw">+10 ' + t('reward.coins') + '</span><span class="rw b">' + t('reward.stamp') + '</span>' + prizeChip(s) + '</div>' : '') +
+      '<div class="actions">' + (qd ? '' : '<button class="btn" type="button" id="goQuiz">' + t('action.quiz') + '</button>') + '<button class="btn ghost" type="button" id="mDone">' + (qd ? t('action.close') : t('action.later')) + '</button></div></div>';
     var gq = $('#goQuiz'); if (gq) gq.onclick = function () { stage2(s); };
     $('#mDone').onclick = closeModal; var f = mBody.querySelector('.btn'); if (f) f.focus();
   }
   function prizeChip(s) {
     var t = PRIZE[s.id];
-    return '<span class="rw c"><svg width="20" height="20" viewBox="-16 -16 32 32" style="vertical-align:-5px" aria-hidden="true">' + itemIcon(t) + '</svg> ' + TYPES[t] + '</span>';
+    return '<span class="rw c"><svg width="20" height="20" viewBox="-16 -16 32 32" style="vertical-align:-5px" aria-hidden="true">' + itemIcon(t) + '</svg> ' + tKey('item.' + t, TYPES[t]) + '</span>';
   }
   function crateSVG() {
     return '<svg viewBox="-60 -60 120 120" width="150" height="150" aria-hidden="true"><rect x="-46" y="-46" width="92" height="92" rx="14" fill="#fff" stroke="#1f5fbf" stroke-width="5"/>' +
@@ -955,7 +1589,7 @@ registerSW({ immediate: true });
       '<path d="M-46 0 H46 M0 -46 V46" stroke="#e2703a" stroke-width="6"/><circle r="10" fill="#ffc93c" stroke="#1d2a4a" stroke-width="3"/></svg>';
   }
   function stage0(s) {
-    mBody.innerHTML = '<h2 id="mTitle">A tile crate!</h2><p class="fact">You reached ' + s.name + '. Open the crate to reveal your stamp.</p><div class="cratewrap"><button class="crate" type="button" id="crate" aria-label="Open the crate">' + crateSVG() + '</button></div>';
+    mBody.innerHTML = '<h2 id="mTitle">' + t('crate.title') + '</h2><p class="fact">' + tr('crate.reveal', { name: spotText(s, 'name') }) + '</p><div class="cratewrap"><button class="crate" type="button" id="crate" aria-label="' + t('crate.open') + '">' + crateSVG() + '</button></div>';
     var c = $('#crate'); c.focus();
     c.onclick = function () {
       c.disabled = true; c.classList.add('opening'); blip([523, 659, 784, 1046], .1);
@@ -964,8 +1598,8 @@ registerSW({ immediate: true });
     };
   }
   function stage2(s) {
-    mBody.innerHTML = '<h2 id="mTitle">Quick quiz</h2><p class="fact" style="color:var(--ink);font-size:18px">' + s.q + '</p><div class="opts">' +
-      s.o.map(function (o, i) { return '<button class="opt" type="button" data-i="' + i + '">' + o + '</button>'; }).join('') + '</div><div class="fb" id="fb" aria-live="polite"></div><div class="actions" id="qa"></div>';
+    mBody.innerHTML = '<h2 id="mTitle">' + t('quiz.title') + '</h2><p class="fact" style="color:var(--ink);font-size:18px">' + spotText(s, 'q') + '</p><div class="opts">' +
+      spotText(s, 'o').map(function (o, i) { return '<button class="opt" type="button" data-i="' + i + '">' + o + '</button>'; }).join('') + '</div><div class="fb" id="fb" aria-live="polite"></div><div class="actions" id="qa"></div>';
     var done = false;
     mBody.querySelectorAll('.opt').forEach(function (b) {
       b.onclick = function () {
@@ -974,10 +1608,10 @@ registerSW({ immediate: true });
         mBody.querySelectorAll('.opt').forEach(function (x, j) { x.disabled = true; if (j === s.a) x.classList.add('right'); });
         rollDaily();
         if (!S.quiz[s.id]) S.daily.stats.quizzes += 1;
-        if (ok) { b.classList.add('right'); S.coins += 20; addXp(20); S.quiz[s.id] = 1; $('#fb').textContent = 'Correct! +20 coins and +20 XP'; blip([784, 988, 1318], .09); confetti(50); }
-        else { b.classList.add('wrong'); S.quiz[s.id] = 1; $('#fb').textContent = 'Not quite. The answer glows green.'; blip([300, 220], .12); }
+        if (ok) { b.classList.add('right'); S.coins += 20; addXp(20); S.quiz[s.id] = 1; $('#fb').textContent = t('quiz.feedback.correct'); blip([784, 988, 1318], .09); confetti(50); }
+        else { b.classList.add('wrong'); S.quiz[s.id] = 1; $('#fb').textContent = t('quiz.feedback.incorrect'); blip([300, 220], .12); }
         save(); renderHud();
-        $('#qa').innerHTML = '<button class="btn" type="button" id="qDone">Keep exploring</button>'; $('#qDone').onclick = closeModal; $('#qDone').focus();
+        $('#qa').innerHTML = '<button class="btn" type="button" id="qDone">' + t('quiz.keep') + '</button>'; $('#qDone').onclick = closeModal; $('#qDone').focus();
       };
     });
     var f = mBody.querySelector('.opt'); if (f) f.focus();
@@ -1014,8 +1648,8 @@ registerSW({ immediate: true });
     if (rs.getAttribute('data-arm')) {
       S = fresh(); save(); location.reload(); return;
     }
-    rs.setAttribute('data-arm', '1'); rs.textContent = 'Tap again to erase all progress';
-    clearTimeout(rt); rt = setTimeout(function () { rs.removeAttribute('data-arm'); rs.textContent = 'Start over'; }, 4000);
+    rs.setAttribute('data-arm', '1'); rs.textContent = t('action.startover.confirm');
+    clearTimeout(rt); rt = setTimeout(function () { rs.removeAttribute('data-arm'); rs.textContent = t('home.reset'); }, 4000);
   });
 
   var SKINS = [
@@ -1028,35 +1662,36 @@ registerSW({ immediate: true });
   function applySkin() { var k = skinById(S.skin); hatA.setAttribute('fill', k.hat); hatB.setAttribute('fill', k.hat); }
   function renderItems() {
     var order = ['coin', 'grape', 'chestnut', 'tile', 'flower', 'shield', 'dice', 'compass', 'token'];
-    $('#colCount').textContent = Object.keys(S.got).length + ' of ' + (ITEMS.length + CITY_MAP_ITEMS.length) + ' picked up on the map';
-    $('#items').innerHTML = order.map(function (t) {
-      var n = S.items[t] || 0;
-      return '<div class="card' + (n ? ' got' : '') + '"><svg class="st' + (n ? '' : ' locked') + '" viewBox="-16 -16 32 32" aria-hidden="true">' + itemIcon(t) + '</svg><div><h3>' + TYPES[t] + '</h3><p>' + (n ? '× ' + n : 'Not found yet') + '</p></div></div>';
+    $('#colCount').textContent = tr('collection.picked', { found: Object.keys(S.got).length, total: ITEMS.length + CITY_MAP_ITEMS.length });
+    $('#items').innerHTML = order.map(function (itemType) {
+      var n = S.items[itemType] || 0;
+      return '<div class="card' + (n ? ' got' : '') + '"><svg class="st' + (n ? '' : ' locked') + '" viewBox="-16 -16 32 32" aria-hidden="true">' + itemIcon(itemType) + '</svg><div><h3>' + tKey('item.' + itemType, TYPES[itemType]) + '</h3><p>' + (n ? '× ' + n : t('collection.notfound')) + '</p></div></div>';
     }).join('');
     var discovered = CITY_MAP_ITEMS.filter(function (item) { return S.got[item.id]; }).length;
-    $('#cityDiscoveryCount').textContent = discovered + ' of ' + CITY_MAP_ITEMS.length + ' discovered';
+    $('#cityDiscoveryCount').textContent = tr('collection.discovered', { found: discovered, total: CITY_MAP_ITEMS.length });
     $('#cityDiscoveryList').innerHTML = CITY_MAP_ITEMS.map(function (item) {
       var found = Boolean(S.got[item.id]);
       return '<div class="city-discovery-card' + (found ? ' is-found' : '') + '"><span class="city-discovery-icon" aria-hidden="true">' + (found ? '✓' : '✦') + '</span>' +
-        '<span class="city-discovery-name">' + item.name + '</span><span class="city-discovery-status">' + (found ? 'Discovered' : 'Not found') + '</span></div>';
+        '<span class="city-discovery-name">' + spotText(SPOTS.filter(function (spot) { return spot.id === item.spotId; })[0] || { id: '', name: item.name }, 'name') + '</span><span class="city-discovery-status">' + (found ? t('map.item.discovered') : t('map.item.notfound')) + '</span></div>';
     }).join('');
   }
   function renderShop() {
     $('#shop').innerHTML = SKINS.map(function (k) {
       var own = S.skins[k.id], on = S.skin === k.id;
-      return '<div class="card' + (on ? ' got' : '') + '"><svg class="st" viewBox="-20 -24 40 40" aria-hidden="true"><circle cy="-2" r="13" fill="#ffd9b0" stroke="#1d2a4a" stroke-width="2.5"/><path d="M-15 -4 Q0 -30 15 -4Z" fill="' + k.hat + '" stroke="#1d2a4a" stroke-width="2.5" stroke-linejoin="round"/><rect x="-18" y="-5" width="36" height="5" rx="2.5" fill="' + k.hat + '" stroke="#1d2a4a" stroke-width="2.5"/></svg><div><h3>' + k.name + '</h3><p>' + (on ? 'Wearing' : own ? 'Owned' : k.price + ' coins') + '</p>' + (on ? '' : '<button class="btn go" type="button" data-act="' + (own ? 'equip' : 'buy') + '" data-id="' + k.id + '">' + (own ? 'Wear' : 'Buy') + '</button>') + '</div></div>';
+      return '<div class="card' + (on ? ' got' : '') + '"><svg class="st" viewBox="-20 -24 40 40" aria-hidden="true"><circle cy="-2" r="13" fill="#ffd9b0" stroke="#1d2a4a" stroke-width="2.5"/><path d="M-15 -4 Q0 -30 15 -4Z" fill="' + k.hat + '" stroke="#1d2a4a" stroke-width="2.5" stroke-linejoin="round"/><rect x="-18" y="-5" width="36" height="5" rx="2.5" fill="' + k.hat + '" stroke="#1d2a4a" stroke-width="2.5"/></svg><div><h3>' + tKey('shop.skin.' + k.id, k.name) + '</h3><p>' + (on ? t('avatar.wearing') : own ? t('avatar.owned') : k.price + (locale === 'pt' ? ' moedas' : ' coins')) + '</p>' + (on ? '' : '<button class="btn go" type="button" data-act="' + (own ? 'equip' : 'buy') + '" data-id="' + k.id + '">' + (own ? t('avatar.wear') : t('avatar.buy')) + '</button>') + '</div></div>';
     }).join('');
   }
   function skinAct(act, id) {
     var k = skinById(id), msg = $('#shopMsg');
     if (act === 'buy' && !S.skins[id]) {
-      if (S.coins < k.price) { msg.textContent = 'Need ' + (k.price - S.coins) + ' more coins for ' + k.name; blip([300, 220], .1); return; }
+      if (S.coins < k.price) { msg.textContent = tr('avatar.need', { count: k.price - S.coins, name: tKey('shop.skin.' + k.id, k.name) }); blip([300, 220], .1); return; }
       S.coins -= k.price; S.skins[id] = 1;
     }
     if (!S.skins[id]) return;
     S.skin = id; save(); applySkin(); renderHud(); renderShop();
-    $('#shopMsg').textContent = 'Now wearing ' + k.name; blip([660, 880, 1100], .08); confetti(40);
+    $('#shopMsg').textContent = tr('avatar.nowwearing', { name: tKey('shop.skin.' + k.id, k.name) }); blip([660, 880, 1100], .08); confetti(40);
   }
+  setLocale(locale);
   renderHud(); renderDock(); renderGrid(); renderItems(); renderShop(); applySkin(); updateCompass();
   initializeStudioShop().catch(function (error) {
     console.error('Studio Shop initialization failed.', error);

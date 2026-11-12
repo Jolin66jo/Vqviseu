@@ -92,8 +92,72 @@ const state = {
   productsNode: null
 };
 
+let locale = 'en';
+const shopTranslations = {
+  en: {
+    'preview.mode': 'Preview mode: connect Supabase to enable sign-in and purchases.',
+    'preview.error': 'Shop is in preview mode.',
+    'offline.catalog': 'Offline: showing the saved catalog. Purchases require a connection.',
+    'product.owned': 'In your collection',
+    'product.empty': 'Nothing on this shelf just yet. Check back soon.',
+    'account.signedin': 'You are signed in to your Studio account.',
+    'action.signin': 'Sign in',
+    'action.signout': 'Sign out',
+    'category.all': 'All',
+    'category.founder_pass': 'Founder Pass',
+    'category.grao_vasco_art_packs': 'Grão Vasco Art Packs',
+    'category.streak_boosts': 'Streak Boosts'
+  },
+  pt: {
+    'preview.mode': 'Modo de pré-visualização: liga o Supabase para ativar o início de sessão e as compras.',
+    'preview.error': 'A loja está em modo de pré-visualização.',
+    'offline.catalog': 'Offline: a mostrar o catálogo guardado. As compras requerem ligação à internet.',
+    'product.owned': 'Na tua coleção',
+    'product.empty': 'Ainda não há artigos nesta prateleira. Volta em breve.',
+    'account.signedin': 'Já tens sessão iniciada na tua conta Studio.',
+    'action.signin': 'Entrar',
+    'action.signout': 'Sair',
+    'category.all': 'Tudo',
+    'category.founder_pass': 'Passe de Fundador',
+    'category.grao_vasco_art_packs': 'Pacotes de Arte Grão Vasco',
+    'category.streak_boosts': 'Bónus de Sequência',
+    'product.founder.title': 'Passe de Fundador',
+    'product.founder.description': 'Um emblema dourado para os primeiros exploradores do Viseu Quest.',
+    'product.art.title': 'Pacote de Arte Grão Vasco',
+    'product.art.description': 'Cores inspiradas no museu para a tua próxima aventura.',
+    'product.board.title': 'Tema de Tabuleiro Azulejo',
+    'product.board.description': 'Azulejos azuis e brancos para o tabuleiro do jogo.',
+    'product.streak.title': 'Bónus de Sequência',
+    'product.streak.description': 'Um pequeno incentivo dourado para manter a tua sequência.',
+    'product.coins.title': 'Pacote de Moedas de Viseu',
+    'product.coins.description': 'Adiciona 100 Moedas de Viseu à tua carteira Studio.'
+  }
+};
+
+function tr(key) {
+  return shopTranslations[locale]?.[key] || shopTranslations.en[key] || key;
+}
+
+function localizedProduct(product, field) {
+  if (locale !== 'pt') return product[field];
+  const keys = {
+    'founder-pass': 'founder',
+    'grao-vasco-art-pack': 'art',
+    'azulejo-board-theme': 'board',
+    'streak-boost': 'streak',
+    'viseu-coins-100': 'coins'
+  };
+  const productKey = keys[product.slug];
+  return productKey ? (shopTranslations.pt[`product.${productKey}.${field}`] || product[field]) : product[field];
+}
+
 function setStatus(message, isError = false) {
-  state.status.textContent = message;
+  const knownMessages = {
+    'Preview mode: connect Supabase to enable sign-in and purchases.': 'preview.mode',
+    'Shop is in preview mode.': 'preview.error',
+    'Offline: showing the saved catalog. Purchases require a connection.': 'offline.catalog'
+  };
+  state.status.textContent = knownMessages[message] ? tr(knownMessages[message]) : message;
   state.status.classList.toggle('is-error', isError);
 }
 
@@ -290,10 +354,10 @@ function createProductCard(product) {
   copy.className = 'studio-product-copy';
   const title = document.createElement('h3');
   title.className = 'studio-product-title';
-  title.textContent = product.title;
+  title.textContent = localizedProduct(product, 'title');
   const description = document.createElement('p');
   description.className = 'studio-product-description';
-  description.textContent = product.description;
+  description.textContent = localizedProduct(product, 'description');
   copy.append(title, description);
 
   const reusable = reusableSlugs.has(product.slug);
@@ -301,7 +365,7 @@ function createProductCard(product) {
   if (owned) {
     const label = document.createElement('span');
     label.className = 'studio-owned';
-    label.textContent = 'In your collection';
+    label.textContent = tr('product.owned');
     copy.append(label);
   } else {
     const button = document.createElement('button');
@@ -312,13 +376,13 @@ function createProductCard(product) {
     button.dataset.slug = product.slug;
     button.dataset.kind = kind;
     button.setAttribute('aria-label', kind === 'checkout'
-      ? `Buy ${product.title} for ${euro.format(product.price_eur_cents / 100)}`
-      : `Buy ${product.title} for ${product.coin_price} Viseu Coins`);
+      ? `${locale === 'pt' ? 'Comprar' : 'Buy'} ${localizedProduct(product, 'title')} ${locale === 'pt' ? 'por' : 'for'} ${euro.format(product.price_eur_cents / 100)}`
+      : `${locale === 'pt' ? 'Comprar' : 'Buy'} ${localizedProduct(product, 'title')} ${locale === 'pt' ? 'por' : 'for'} ${product.coin_price} ${locale === 'pt' ? 'Moedas de Viseu' : 'Viseu Coins'}`);
 
     const label = document.createElement('span');
     label.textContent = kind === 'checkout'
       ? euro.format(product.price_eur_cents / 100)
-      : `${product.coin_price} Viseu Coins`;
+      : `${product.coin_price} ${locale === 'pt' ? 'Moedas de Viseu' : 'Viseu Coins'}`;
     const spinner = document.createElement('span');
     spinner.className = 'studio-spinner';
     spinner.hidden = true;
@@ -340,7 +404,7 @@ function renderProducts() {
   if (!products.length) {
     const empty = document.createElement('p');
     empty.className = 'studio-empty';
-    empty.textContent = 'Nothing on this shelf just yet. Check back soon.';
+    empty.textContent = tr('product.empty');
     state.productsNode.append(empty);
     return;
   }
@@ -364,8 +428,8 @@ async function loadCatalog() {
     state.balance = getLocalPreviewBalance();
     renderBalance();
     setStatus(supabaseConfigError
-      ? `${supabaseConfigError} Shop is in preview mode.`
-      : 'Preview mode: connect Supabase to enable sign-in and purchases.',
+      ? `${supabaseConfigError} ${tr('preview.error')}`
+      : tr('preview.mode'),
     Boolean(supabaseConfigError));
     renderProducts();
     return;
@@ -575,11 +639,34 @@ function showReturnMessage() {
 }
 
 export async function initializeStudioShop() {
+  locale = document.documentElement.lang === 'pt-PT' ? 'pt' : 'en';
   state.trigger = document.querySelector('#navStudio');
   state.drawer = document.querySelector('#studioShopDrawer');
   state.status = document.querySelector('#studioShopStatus');
   state.productsNode = document.querySelector('#studioShopProducts');
+  document.querySelector('#studioShopAuth').textContent = tr('action.signin');
+  document.querySelectorAll('.studio-category').forEach((button) => {
+    button.textContent = tr(`category.${button.dataset.category}`);
+  });
 
+  window.addEventListener('viseu:languagechange', (event) => {
+    locale = event.detail?.locale === 'pt' ? 'pt' : 'en';
+    document.querySelector('#studioShopAuth').textContent = state.user ? tr('action.signout') : tr('action.signin');
+    document.querySelectorAll('.studio-category').forEach((button) => {
+      button.textContent = tr(`category.${button.dataset.category}`);
+    });
+    renderProducts();
+  });
+  window.addEventListener('viseu:open-studio-auth', () => {
+    openDrawer();
+    if (state.user) {
+      setStatus(tr('account.signedin'));
+      return;
+    }
+    const form = document.querySelector('#studioShopAuthForm');
+    form.hidden = false;
+    document.querySelector('#studioShopEmail').focus();
+  });
   state.trigger.addEventListener('click', openDrawer);
   document.querySelector('#studioShopClose').addEventListener('click', closeDrawer);
   state.drawer.addEventListener('click', (event) => {
@@ -614,7 +701,7 @@ export async function initializeStudioShop() {
   if (supabase) {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       state.user = session?.user || null;
-      document.querySelector('#studioShopAuth').textContent = state.user ? 'Sign out' : 'Sign in';
+      document.querySelector('#studioShopAuth').textContent = state.user ? tr('action.signout') : tr('action.signin');
       document.querySelector('#studioShopAuthForm').hidden = Boolean(state.user);
       setTimeout(() => { void loadAccount(); }, 0);
     });
@@ -622,11 +709,11 @@ export async function initializeStudioShop() {
     const { data: { session }, error } = await supabase.auth.getSession();
     if (error) setStatus(`Could not restore your sign-in: ${error.message}`, true);
     state.user = session?.user || null;
-    document.querySelector('#studioShopAuth').textContent = state.user ? 'Sign out' : 'Sign in';
+    document.querySelector('#studioShopAuth').textContent = state.user ? tr('action.signout') : tr('action.signin');
     await Promise.all([loadCatalog(), loadAccount()]);
   } else {
     await loadCatalog();
-    document.querySelector('#studioShopAuth').textContent = 'Sign in';
+    document.querySelector('#studioShopAuth').textContent = tr('action.signin');
   }
   showReturnMessage();
 }

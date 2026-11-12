@@ -7,6 +7,61 @@ const mapElement = document.querySelector('#cityMap');
 const locateButton = document.querySelector('#locateUser');
 const locationStatus = document.querySelector('#cityMapLocationStatus');
 const networkStatus = document.querySelector('#cityMapNetworkStatus');
+let locale = document.documentElement.lang === 'pt-PT' ? 'pt' : 'en';
+const messages = {
+  en: {
+    offline: 'Offline: street-map tiles may be unavailable. Close this view to use the illustrated game map.',
+    online: 'Online street map · © OpenStreetMap contributors',
+    tileError: 'Street-map tiles could not load. Check your connection or close this view to use the game map.',
+    locationUnsupported: 'Location needs a supported browser and a secure connection (HTTPS).',
+    permission: 'Requesting location permission…',
+    locationOff: 'Location is off. Your position is not shown.',
+    approximate: 'Approximate location shown on this device only.',
+    precise: 'Your location is shown on this device only.',
+    permissionDenied: 'Location permission was denied. You can enable it in your browser settings.',
+    unavailable: 'Your location is unavailable right now. Try again when location services are ready.',
+    timeout: 'Location request timed out. Check your connection or try again.',
+    startError: 'The browser could not start location. Check browser permissions and try again.',
+    locate: 'Locate me',
+    locating: 'Locating…',
+    stop: 'Stop location',
+    stopped: 'Location sharing is off. Your position was removed from the map.',
+    preference: 'First enable “Allow location on city map” in your Profile settings.',
+    approximateMode: 'Approximate',
+    titleCollect: 'Collect discovery',
+    titleCollected: 'Collected',
+    explore: 'Explore in game',
+    prototype: 'Prototype discovery: this does not verify a physical visit or record your location.'
+  },
+  pt: {
+    offline: 'Offline: os mosaicos do mapa de ruas podem não estar disponíveis. Fecha esta vista para usar o mapa ilustrado do jogo.',
+    online: 'Mapa de ruas online · © OpenStreetMap contributors',
+    tileError: 'Não foi possível carregar os mosaicos do mapa. Verifica a ligação ou fecha esta vista para usar o mapa do jogo.',
+    locationUnsupported: 'A localização requer um navegador compatível e uma ligação segura (HTTPS).',
+    permission: 'A pedir autorização de localização…',
+    locationOff: 'A localização está desligada. A tua posição não é apresentada.',
+    approximate: 'A localização aproximada é apresentada apenas neste dispositivo.',
+    precise: 'A tua localização é apresentada apenas neste dispositivo.',
+    permissionDenied: 'A autorização de localização foi recusada. Podes ativá-la nas definições do navegador.',
+    unavailable: 'A localização não está disponível. Tenta novamente quando os serviços de localização estiverem prontos.',
+    timeout: 'O pedido de localização expirou. Verifica a ligação ou tenta novamente.',
+    startError: 'O navegador não conseguiu iniciar a localização. Verifica as permissões e tenta novamente.',
+    locate: 'Localizar-me',
+    locating: 'A localizar…',
+    stop: 'Parar localização',
+    stopped: 'A localização foi desligada e a tua posição foi removida do mapa.',
+    preference: 'Ativa primeiro “Permitir localização no mapa da cidade” nas definições do perfil.',
+    approximateMode: 'Localização aproximada',
+    titleCollect: 'Recolher descoberta',
+    titleCollected: 'Recolhido',
+    explore: 'Explorar no jogo',
+    prototype: 'Descoberta de demonstração: não confirma uma visita física nem regista a tua localização.'
+  }
+};
+
+function text(key) {
+  return messages[locale][key] || messages.en[key];
+}
 
 let cityMap;
 let marker;
@@ -20,9 +75,24 @@ let trackingRequested = false;
 let itemMarkers = new Map();
 let claimedItemIds = new Set();
 let hasFittedItems = false;
+let lastLocationMessage = 'Location is off. Your position is not shown.';
 
 function setLocationStatus(message) {
-  locationStatus.textContent = message;
+  lastLocationMessage = message;
+  const translated = {
+    'Location needs a supported browser and a secure connection (HTTPS).': 'locationUnsupported',
+    'Requesting location permission…': 'permission',
+    'Approximate location shown on this device only.': 'approximate',
+    'Your location is shown on this device only.': 'precise',
+    'Location permission was denied. You can enable it in your browser settings.': 'permissionDenied',
+    'Your location is unavailable right now. Try again when location services are ready.': 'unavailable',
+    'Location request timed out. Check your connection or try again.': 'timeout',
+    'The browser could not start location. Check browser permissions and try again.': 'startError',
+    'Location is off. Your position is not shown.': 'locationOff',
+    'Location sharing is off. Your position was removed from the map.': 'stopped',
+    'First enable “Allow location on city map” in your Profile settings.': 'preference'
+  };
+  locationStatus.textContent = translated[message] ? text(translated[message]) : message;
 }
 
 function stopWatching() {
@@ -42,7 +112,7 @@ function clearLocation() {
     marker = null;
     accuracyCircle = null;
   }
-  locateButton.textContent = 'Locate me';
+  locateButton.textContent = text('locate');
   locateButton.setAttribute('aria-pressed', 'false');
 }
 
@@ -89,7 +159,7 @@ function startWatching() {
     return;
   }
 
-  locateButton.textContent = 'Locating…';
+  locateButton.textContent = text('locating');
   setLocationStatus('Requesting location permission…');
   try {
     watchId = navigator.geolocation.watchPosition(
@@ -97,7 +167,7 @@ function startWatching() {
         const shouldCenter = !latestPosition;
         latestPosition = position;
         displayPosition(position, shouldCenter);
-        locateButton.textContent = 'Stop location';
+        locateButton.textContent = text('stop');
       },
       function (error) {
         clearLocation();
@@ -121,9 +191,7 @@ function startWatching() {
 }
 
 function updateNetworkStatus() {
-  networkStatus.textContent = navigator.onLine
-    ? 'Online street map · © OpenStreetMap contributors'
-    : 'Offline: street-map tiles may be unavailable. Close this view to use the illustrated game map.';
+  networkStatus.textContent = navigator.onLine ? text('online') : text('offline');
 }
 
 function itemIcon(claimed) {
@@ -138,12 +206,12 @@ function itemIcon(claimed) {
 
 function itemPopup(item) {
   const claimed = claimedItemIds.has(item.id);
-  return '<section class="city-item-popup"><h3>' + item.name + '</h3><p>' + item.description + '</p>' +
+  return '<section class="city-item-popup"><h3>' + (locale === 'pt' ? item.namePt : item.name) + '</h3><p>' + (locale === 'pt' ? item.descriptionPt : item.description) + '</p>' +
     '<p class="city-item-reward">+ ' + item.v + ' Viseu coins · ' + item.xp + ' XP</p>' +
     '<button type="button" class="city-item-action" data-city-item-claim="' + item.id + '"' + (claimed ? ' disabled' : '') + '>' +
-    (claimed ? 'Collected' : 'Collect discovery') + '</button>' +
-    '<button type="button" class="city-item-explore" data-city-item-explore="' + item.spotId + '">Explore in game</button>' +
-    '<small>Prototype discovery: this does not verify a physical visit or record your location.</small></section>';
+    (claimed ? text('titleCollected') : text('titleCollect')) + '</button>' +
+    '<button type="button" class="city-item-explore" data-city-item-explore="' + item.spotId + '">' + text('explore') + '</button>' +
+    '<small>' + text('prototype') + '</small></section>';
 }
 
 export function showCityMap() {
@@ -181,8 +249,8 @@ export function showCityMap() {
     tileLayer.on('tileload', updateNetworkStatus);
     tileLayer.on('tileerror', function () {
       networkStatus.textContent = navigator.onLine
-        ? 'Street-map tiles could not load. Check your connection or close this view to use the game map.'
-        : 'Offline: street-map tiles may be unavailable. Close this view to use the illustrated game map.';
+        ? text('tileError')
+        : text('offline');
     });
     window.addEventListener('online', updateNetworkStatus);
     window.addEventListener('offline', updateNetworkStatus);
@@ -234,6 +302,17 @@ locateButton.addEventListener('click', function () {
   }
   trackingRequested = true;
   startWatching();
+});
+
+window.addEventListener('viseu:languagechange', function (event) {
+  locale = event.detail && event.detail.locale === 'pt' ? 'pt' : 'en';
+  locateButton.textContent = trackingRequested && (watchId !== null || latestPosition) ? text('stop') : text('locate');
+  setLocationStatus(lastLocationMessage);
+  updateNetworkStatus();
+  itemMarkers.forEach(function (itemMarker, id) {
+    const item = CITY_MAP_ITEMS.find(function (candidate) { return candidate.id === id; });
+    if (item) itemMarker.setPopupContent(itemPopup(item));
+  });
 });
 
 window.addEventListener('viseu:location-preference', function (event) {
