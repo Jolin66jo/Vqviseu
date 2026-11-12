@@ -16,6 +16,7 @@
   },
   "dependencies": {
     "@rive-app/canvas": "^2.50.0",
-    "@supabase/supabase-js": "^2.119.0"
+    "@supabase/supabase-js": "^2.119.0",
+    "leaflet": "^1.9.4"
   }
 }

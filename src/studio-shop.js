@@ -516,7 +516,14 @@ function openDrawer() {
   state.isOpen = true;
   state.drawer.hidden = false;
   document.body.style.overflow = 'hidden';
+  document.querySelectorAll('.bottom-nav-item').forEach((item) => {
+    item.classList.remove('is-active');
+    item.removeAttribute('aria-current');
+  });
   state.trigger.setAttribute('aria-expanded', 'true');
+  state.trigger.classList.add('is-active');
+  state.trigger.setAttribute('aria-current', 'page');
+  window.dispatchEvent(new CustomEvent('viseu:screenchange', { detail: { open: true } }));
   renderProducts();
   document.querySelector('#studioShopClose').focus();
 }
@@ -526,6 +533,11 @@ function closeDrawer() {
   state.drawer.hidden = true;
   document.body.style.overflow = '';
   state.trigger.setAttribute('aria-expanded', 'false');
+  state.trigger.classList.remove('is-active');
+  state.trigger.removeAttribute('aria-current');
+  document.querySelector('#navMap').classList.add('is-active');
+  document.querySelector('#navMap').setAttribute('aria-current', 'page');
+  window.dispatchEvent(new CustomEvent('viseu:screenchange', { detail: { open: false } }));
   clearPreviews();
   state.trigger.focus();
 }
@@ -563,7 +575,7 @@ function showReturnMessage() {
 }
 
 export async function initializeStudioShop() {
-  state.trigger = document.querySelector('#studioShopOpen');
+  state.trigger = document.querySelector('#navStudio');
   state.drawer = document.querySelector('#studioShopDrawer');
   state.status = document.querySelector('#studioShopStatus');
   state.productsNode = document.querySelector('#studioShopProducts');

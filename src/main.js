@@ -1,7 +1,9 @@
 import './style.css';
 import './studio-shop.css';
+import './navigation.css';
 import { registerSW } from 'virtual:pwa-register';
 import { initializeStudioShop } from './studio-shop.js';
+import { CITY_MAP_ITEMS } from './city-map-items.js';
 
 registerSW({ immediate: true });
 
@@ -86,18 +88,214 @@ registerSW({ immediate: true });
   var TITLES = ['Curious Visitor', 'Street Wanderer', 'Local Guide', 'Hilltop Hero', 'Viseu Legend'];
 
   /* ---------- State ---------- */
-  function fresh() { return { xp: 0, coins: 0, stamps: {}, got: {}, quiz: {}, chests: {}, mute: false, items: {}, skins: { cap: 1 }, skin: 'cap' }; }
+  function fresh() {
+    return {
+      xp: 0, coins: 0, stamps: {}, got: {}, quiz: {}, chests: {}, mute: false, items: {}, skins: { cap: 1 }, skin: 'cap',
+      profile: { name: '', avatar: '🧭', shareLocation: false, approximateLocation: true, audience: 'private' },
+      daily: { date: '', lastCheckin: '', streak: 0, bestStreak: 0, lastPerfectWeek: 0, stats: { pickups: 0, stamps: 0, quizzes: 0 }, claims: {} },
+      trails: { claimed: {} }
+    };
+  }
+  function dateKey(date) {
+    return date.toISOString().slice(0, 10);
+  }
+  function ensureDailyState(state) {
+    var defaults = fresh();
+    state.profile = Object.assign({}, defaults.profile, state.profile || {});
+    state.daily = Object.assign({}, defaults.daily, state.daily || {});
+    state.daily.stats = Object.assign({}, defaults.daily.stats, state.daily.stats || {});
+    state.daily.claims = Object.assign({}, defaults.daily.claims, state.daily.claims || {});
+    state.trails = Object.assign({}, defaults.trails, state.trails || {});
+    state.trails.claimed = Object.assign({}, defaults.trails.claimed, state.trails.claimed || {});
+    if (state.daily.date !== dateKey(new Date())) {
+      state.daily.date = dateKey(new Date());
+      state.daily.stats = { pickups: 0, stamps: 0, quizzes: 0 };
+      state.daily.claims = {};
+    }
+    return state;
+  }
   function load() {
     try {
       var j = JSON.parse(localStorage.getItem(KEY) || 'null');
-      if (j && typeof j === 'object') { var s = fresh(); for (var k in s) if (j[k] !== undefined) s[k] = j[k]; return s; }
+      if (j && typeof j === 'object') { var s = fresh(); for (var k in s) if (j[k] !== undefined) s[k] = j[k]; return ensureDailyState(s); }
     } catch (e) {}
-    return fresh();
+    return ensureDailyState(fresh());
   }
   var S = load();
-  function save() { try { localStorage.setItem(KEY, JSON.stringify(S)); } catch (e) {} }
+  function save() {
+    try {
+      localStorage.setItem(KEY, JSON.stringify(S));
+    } catch (e) {
+      console.warn('Viseu Quest progress could not be saved in this browser.', e);
+      var live = $('#live');
+      if (live) live.textContent = 'Progress could not be saved on this device. Check browser storage settings.';
+    }
+  }
   function level() { return Math.floor(S.xp / 100) + 1; }
   function stampCount() { return SPOTS.filter(function (s) { return S.stamps[s.id]; }).length; }
+  var DAILY_CHALLENGES = [
+    { id: 'pickups', title: 'Find 3 map collectibles', reward: 8, xp: 10, progress: function () { return Math.min(3, S.daily.stats.pickups); }, goal: 3 },
+    { id: 'stamp', title: 'Earn a landmark stamp', reward: 10, xp: 15, progress: function () { return Math.min(1, S.daily.stats.stamps); }, goal: 1 },
+    { id: 'quiz', title: 'Finish a landmark quiz', reward: 8, xp: 10, progress: function () { return Math.min(1, S.daily.stats.quizzes); }, goal: 1 },
+    { id: 'checkin', title: 'Claim today’s check-in', reward: 6, xp: 8, progress: function () { return S.daily.lastCheckin === dateKey(new Date()) ? 1 : 0; }, goal: 1 },
+    { id: 'collect-five', title: 'Find 5 collectibles today', reward: 12, xp: 15, progress: function () { return Math.min(5, S.daily.stats.pickups); }, goal: 5 }
+  ];
+  function activeDailyChallenges() {
+    var dayNumber = Math.floor(Date.parse(dateKey(new Date()) + 'T00:00:00Z') / 86400000);
+    var first = (dayNumber * 3) % DAILY_CHALLENGES.length;
+    return [0, 1, 2].map(function (offset) { return DAILY_CHALLENGES[(first + offset) % DAILY_CHALLENGES.length]; });
+  }
+  var TRAILS = [
+    {
+      id: 'cava', title: 'Chapter 1 · Cava de Viriato', sticker: 'Viriato Warrior',
+      tasks: [
+        { id: 'cava-stamp', label: 'Collect the Cava de Viriato stamp', done: function () { return Boolean(S.stamps.cava); } },
+        { id: 'cava-pickups', label: 'Find 5 map collectibles', done: function () { return Object.keys(S.got).length >= 5; } },
+        { id: 'cava-coins', label: 'Find 3 Viseu coins on the map', done: function () { return ITEMS.concat(CITY_MAP_ITEMS).filter(function (item) { return item.t === 'coin' && S.got[item.id]; }).length >= 3; } },
+        { id: 'cava-quiz', label: 'Finish a landmark quiz', done: function () { return Object.keys(S.quiz).length >= 1; } },
+        { id: 'cava-checkin', label: 'Claim a daily check-in', done: function () { return S.daily.streak >= 1; } }
+      ]
+    },
+    {
+      id: 'fontelo', title: 'Chapter 2 · Parque do Fontelo', sticker: 'Fontelo Woods',
+      tasks: [
+        { id: 'fontelo-stamp', label: 'Collect the Fontelo stamp', done: function () { return Boolean(S.stamps.fon); } },
+        { id: 'fontelo-park', label: 'Visit Parque Aquilino Ribeiro', done: function () { return Boolean(S.stamps.aq); } },
+        { id: 'fontelo-pickups', label: 'Find 10 map collectibles', done: function () { return Object.keys(S.got).length >= 10; } },
+        { id: 'fontelo-quizzes', label: 'Finish 2 landmark quizzes', done: function () { return Object.keys(S.quiz).length >= 2; } },
+        { id: 'fontelo-streak', label: 'Build a 2-day check-in streak', done: function () { return S.daily.bestStreak >= 2; } }
+      ]
+    },
+    {
+      id: 'cathedral', title: 'Chapter 3 · Sé & Centro Histórico', sticker: 'Granite Cathedral',
+      tasks: [
+        { id: 'cathedral-se', label: 'Collect the Sé Catedral stamp', done: function () { return Boolean(S.stamps.se); } },
+        { id: 'cathedral-gv', label: 'Visit Museu Grão Vasco', done: function () { return Boolean(S.stamps.gv); } },
+        { id: 'cathedral-mis', label: 'Visit Igreja da Misericórdia', done: function () { return Boolean(S.stamps.mis); } },
+        { id: 'cathedral-quizzes', label: 'Finish 3 landmark quizzes', done: function () { return Object.keys(S.quiz).length >= 3; } },
+        { id: 'cathedral-streak', label: 'Build a 3-day check-in streak', done: function () { return S.daily.bestStreak >= 3; } }
+      ]
+    },
+    {
+      id: 'ecopista', title: 'Chapter 4 · Ecopista do Dão', sticker: 'Dão Greenway',
+      tasks: [
+        { id: 'ecopista-aq', label: 'Visit Parque Aquilino Ribeiro', done: function () { return Boolean(S.stamps.aq); } },
+        { id: 'ecopista-rossio', label: 'Visit Praça da República', done: function () { return Boolean(S.stamps.rossio); } },
+        { id: 'ecopista-soar', label: 'Visit Porta do Soar', done: function () { return Boolean(S.stamps.soar); } },
+        { id: 'ecopista-collect', label: 'Find 20 map collectibles', done: function () { return Object.keys(S.got).length >= 20; } },
+        { id: 'ecopista-streak', label: 'Build a 7-day check-in streak', done: function () { return S.daily.bestStreak >= 7; } }
+      ]
+    }
+  ];
+
+  function renderProfile() {
+    var name = S.profile.name.trim() || TITLES[Math.min(level() - 1, TITLES.length - 1)];
+    $('#profileName').value = S.profile.name;
+    $('#profileAvatar').textContent = S.profile.avatar;
+    $('#profileLevel').textContent = name + ' · Level ' + level();
+    $('#shareLocation').checked = S.profile.shareLocation;
+    $('#approxLocation').checked = S.profile.approximateLocation;
+    $('#locationAudience').value = S.profile.audience;
+  }
+  function rollDaily() {
+    var day = dateKey(new Date());
+    if (S.daily.date !== day) {
+      S.daily.date = day;
+      S.daily.stats = { pickups: 0, stamps: 0, quizzes: 0 };
+      S.daily.claims = {};
+      save();
+    }
+  }
+  function renderDaily() {
+    rollDaily();
+    var day = dateKey(new Date());
+    var checkedIn = S.daily.lastCheckin === day;
+    var yesterday = dateKey(new Date(Date.now() - 86400000));
+    var currentStreak = S.daily.lastCheckin === day || S.daily.lastCheckin === yesterday ? S.daily.streak : 0;
+    $('#streakCount').textContent = currentStreak + '-day streak' + (S.daily.bestStreak > currentStreak ? ' · best ' + S.daily.bestStreak : '');
+    var perfectWeek = checkedIn && S.daily.streak > 0 && S.daily.streak % 7 === 0;
+    $('#dailyHeadline').textContent = perfectWeek ? 'Perfect week!' : checkedIn ? 'You checked in today' : 'A little progress adds up';
+    $('#dailySubline').textContent = perfectWeek
+      ? 'Seven check-ins in a row · +50 coins and +30 XP'
+      : checkedIn ? 'Nice work. Your streak is safe for today.' : 'Check in when you are ready. No streak loss or penalty.';
+    var checkin = $('#dailyCheckin');
+    checkin.disabled = checkedIn;
+    checkin.textContent = checkedIn ? 'Claimed today' : 'Claim check-in · +10 coins';
+    $('#dailyChallenges').innerHTML = activeDailyChallenges().map(function (challenge) {
+      var progress = challenge.progress(), complete = progress >= challenge.goal, claimed = Boolean(S.daily.claims[challenge.id]);
+      return '<article class="daily-challenge' + (claimed ? ' is-claimed' : '') + '"><span class="challenge-mark">' + (claimed ? '✓' : complete ? '★' : '•') + '</span><div class="challenge-copy"><strong>' + challenge.title + '</strong><small>' + progress + '/' + challenge.goal + ' · +' + challenge.reward + ' coins · +' + challenge.xp + ' XP</small></div>' +
+        (claimed ? '<span class="challenge-done">Claimed</span>' : '<button class="challenge-claim" type="button" data-daily-claim="' + challenge.id + '"' + (complete ? '' : ' disabled') + '>' + (complete ? 'Claim' : 'In progress') + '</button>') + '</article>';
+    }).join('');
+  }
+  function renderTrails() {
+    var previousComplete = true;
+    $('#trailList').innerHTML = TRAILS.map(function (chapter) {
+      var tasks = chapter.tasks.map(function (task) { return { label: task.label, done: task.done() }; });
+      var completeCount = tasks.filter(function (task) { return task.done; }).length;
+      var unlocked = previousComplete;
+      var claimed = Boolean(S.trails.claimed[chapter.id]);
+      var canClaim = unlocked && completeCount >= Math.ceil(tasks.length * .8);
+      var required = Math.ceil(tasks.length * .8);
+      var card = '<section class="trail-card' + (unlocked ? '' : ' is-locked') + '"><header><div><span class="screen-eyebrow">' + (unlocked ? 'Viseu Trail' : 'LOCKED CHAPTER') + '</span><h3>' + chapter.title + '</h3></div><span class="trail-sticker">' + (claimed ? '✓ ' + chapter.sticker : chapter.sticker) + '</span></header>' +
+        '<p class="trail-progress-label">' + completeCount + ' of ' + tasks.length + ' challenges · ' + (claimed ? 'Sticker claimed' : unlocked ? 'Complete ' + required + ' of ' + tasks.length + ' to claim the chapter reward' : 'Claim the previous chapter reward to continue') + '</p><div class="trail-task-list">' +
+        tasks.map(function (task) { return '<div class="trail-task' + (task.done ? ' is-done' : '') + '"><span>' + (task.done ? '✓' : '○') + '</span>' + task.label + '</div>'; }).join('') +
+        '</div><button class="btn' + (canClaim && !claimed ? ' go' : ' ghost') + ' trail-claim" type="button" data-trail-claim="' + chapter.id + '"' + (canClaim && !claimed ? '' : ' disabled') + '>' +
+        (claimed ? 'Sticker collected' : canClaim ? 'Claim chapter sticker · +50 coins' : 'Keep exploring') + '</button></section>';
+      previousComplete = claimed;
+      return card;
+    }).join('');
+  }
+  function claimCheckin() {
+    rollDaily();
+    var today = dateKey(new Date());
+    if (S.daily.lastCheckin === today) return;
+    var yesterday = dateKey(new Date(Date.now() - 86400000));
+    S.daily.streak = S.daily.lastCheckin === yesterday ? S.daily.streak + 1 : 1;
+    S.daily.bestStreak = Math.max(S.daily.bestStreak, S.daily.streak);
+    S.daily.lastCheckin = today;
+    S.coins += 10;
+    addXp(15);
+    if (S.daily.streak % 7 === 0 && S.daily.lastPerfectWeek < S.daily.streak) {
+      S.daily.lastPerfectWeek = S.daily.streak;
+      S.coins += 50;
+      addXp(30);
+    }
+    flushPendingCelebrate();
+    save();
+    renderHud();
+    renderDaily();
+    renderTrails();
+  }
+  function claimDailyChallenge(id) {
+    rollDaily();
+    var challenge = activeDailyChallenges().filter(function (item) { return item.id === id; })[0];
+    if (!challenge || S.daily.claims[id] || challenge.progress() < challenge.goal) return;
+    S.daily.claims[id] = 1;
+    S.coins += challenge.reward;
+    addXp(challenge.xp);
+    flushPendingCelebrate();
+    save();
+    renderHud();
+    renderDaily();
+    renderTrails();
+    blip([660, 880, 1100], .08);
+  }
+  function claimTrail(id) {
+    var index = TRAILS.map(function (chapter) { return chapter.id; }).indexOf(id);
+    var chapter = TRAILS[index];
+    if (!chapter || S.trails.claimed[id]) return;
+    if (index > 0 && !S.trails.claimed[TRAILS[index - 1].id]) return;
+    var done = chapter.tasks.filter(function (task) { return task.done(); }).length;
+    if (done < Math.ceil(chapter.tasks.length * .8)) return;
+    S.trails.claimed[id] = 1;
+    S.coins += 50;
+    addXp(50);
+    flushPendingCelebrate();
+    save();
+    renderHud();
+    renderTrails();
+    blip([523, 659, 784, 1046], .09);
+  }
 
   /* ---------- Sound ---------- */
   var AC = null;
@@ -353,8 +551,221 @@ registerSW({ immediate: true });
     ping.setAttribute('cx', target.x); ping.setAttribute('cy', target.y); ping.setAttribute('display', 'inline');
     blip([420], .06);
   }
+  var mapFrame = $('.mapframe'), mapFullscreen = false, cityMapMode = true, screenOpen = false, activeScreen = null;
+  var cityMapModule = null, cityMapLoading = null;
+  var bodyOverflowBeforeOverlay = '';
+  var navItems = Array.prototype.slice.call(document.querySelectorAll('.bottom-nav-item'));
+  var screenPanels = Array.prototype.slice.call(document.querySelectorAll('[data-screen-panel]'));
+  function setNavActive(name) {
+    navItems.forEach(function (item) {
+      var active = item.getAttribute('data-nav') === name;
+      item.classList.toggle('is-active', active);
+      if (active) item.setAttribute('aria-current', 'page');
+      else item.removeAttribute('aria-current');
+    });
+  }
+  function showScreen(name) {
+    var panel = document.querySelector('[data-screen-panel="' + name + '"]');
+    if (!panel) return;
+    if (activeScreen) closeScreen();
+    activeScreen = panel;
+    screenOpen = true;
+    bodyOverflowBeforeOverlay = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    panel.hidden = false;
+    setNavActive(name);
+    if (name === 'profile') renderProfile();
+    if (name === 'trails') { renderDaily(); renderTrails(); }
+    window.dispatchEvent(new CustomEvent('viseu:screenchange', { detail: { open: true } }));
+    var closeButton = panel.querySelector('[data-close-screen]');
+    if (closeButton) closeButton.focus();
+  }
+  function closeScreen() {
+    if (!activeScreen) return;
+    var panel = activeScreen;
+    activeScreen = null;
+    screenOpen = false;
+    panel.hidden = true;
+    document.body.style.overflow = bodyOverflowBeforeOverlay;
+    setNavActive('map');
+    window.dispatchEvent(new CustomEvent('viseu:screenchange', { detail: { open: false } }));
+    var navMap = $('#navMap');
+    if (navMap) navMap.focus();
+  }
+  function setCityMapMode(useCityMap) {
+    cityMapMode = useCityMap;
+    mapFrame.classList.toggle('is-game-map', !useCityMap);
+    map.hidden = useCityMap;
+    $('#cityMap').hidden = !useCityMap;
+    $('#mapModeToggle').textContent = useCityMap ? 'Use game map' : 'Use street map';
+    if (!cityMapModule) return;
+    if (useCityMap) {
+      cityMapModule.setCityItemsClaimed(CITY_MAP_ITEMS.filter(function (item) {
+        return S.got[item.id];
+      }).map(function (item) { return item.id; }));
+      cityMapModule.showCityMap();
+    } else cityMapModule.hideCityMap();
+  }
+  function setMapFullscreen(open) {
+    mapFullscreen = open;
+    mapFrame.classList.toggle('is-fullscreen', open);
+    if (open) {
+      cityMapMode = true;
+      mapFrame.classList.remove('is-game-map');
+      $('#mapModeToggle').hidden = false;
+      $('#mapModeToggle').disabled = true;
+      $('#cityMap').hidden = true;
+      map.hidden = false;
+      cityMapLoading = cityMapLoading || import('./city-map.js');
+      cityMapLoading.then(function (module) {
+        cityMapModule = module;
+        if (!mapFullscreen) return;
+        window.dispatchEvent(new CustomEvent('viseu:location-preference', {
+          detail: {
+            enabled: S.profile.shareLocation,
+            approximate: S.profile.approximateLocation
+          }
+        }));
+        $('#mapModeToggle').disabled = false;
+        setCityMapMode(true);
+      }).catch(function (error) {
+        if (!mapFullscreen) return;
+        console.error('Unable to load the city map.', error);
+        setCityMapMode(false);
+        $('#mapModeToggle').disabled = true;
+        $('#mapModeToggle').textContent = 'Street map unavailable';
+        $('#mapHint').textContent = 'Street map could not load. Your illustrated game map is still available.';
+      });
+    } else {
+      cityMapMode = false;
+      mapFrame.classList.remove('is-game-map');
+      map.hidden = false;
+      if (cityMapModule) cityMapModule.hideCityMap();
+      else $('#cityMap').hidden = true;
+      $('#mapModeToggle').hidden = true;
+    }
+    $('#mapFullscreenClose').hidden = !open;
+    $('#mapHint').textContent = open
+      ? 'Tap a gold pin to collect a coin or explore its landmark in the game map.'
+      : 'Tap the map to explore in full screen. Stylised map, not to scale.';
+    if (open) {
+      bodyOverflowBeforeOverlay = document.body.style.overflow;
+      document.body.style.overflow = 'hidden';
+      setNavActive('map');
+      $('#mapFullscreenClose').focus();
+    } else {
+      document.body.style.overflow = bodyOverflowBeforeOverlay;
+      map.focus({ preventScroll: true });
+    }
+  }
+  $('#mapModeToggle').addEventListener('click', function () {
+    if (mapFullscreen && cityMapModule) setCityMapMode(!cityMapMode);
+  });
+  window.addEventListener('viseu:city-item-claim', function (event) {
+    var id = event.detail && event.detail.id;
+    var item = CITY_MAP_ITEMS.filter(function (candidate) { return candidate.id === id; })[0];
+    if (!item || S.got[item.id]) return;
+    rollDaily();
+    S.got[item.id] = 1;
+    S.coins += item.v;
+    S.items[item.t] = (S.items[item.t] || 0) + 1;
+    S.daily.stats.pickups += 1;
+    addXp(item.xp);
+    save();
+    renderHud();
+    renderItems();
+    renderDaily();
+    renderTrails();
+    if (cityMapModule) {
+      cityMapModule.setCityItemsClaimed(CITY_MAP_ITEMS.filter(function (candidate) { return S.got[candidate.id]; }).map(function (candidate) { return candidate.id; }));
+    }
+    $('#live').textContent = 'Discovered ' + item.name + ': +' + item.v + ' Viseu coins and ' + item.xp + ' XP';
+    blip([660, 880, 1100], .07);
+  });
+  window.addEventListener('viseu:city-item-explore', function (event) {
+    var spotId = event.detail && event.detail.spotId;
+    var spot = SPOTS.filter(function (candidate) { return candidate.id === spotId; })[0];
+    if (!mapFullscreen || !spot) return;
+    setCityMapMode(false);
+    walkTo(spot.x, spot.y + 44);
+    $('#live').textContent = 'Exploring ' + spot.name + ' in the game map.';
+  });
+  navItems.forEach(function (item) {
+    if (item.getAttribute('data-nav') === 'studio') return;
+    item.addEventListener('click', function () {
+      var name = item.getAttribute('data-nav');
+      if (name === 'map') {
+        closeScreen();
+        setNavActive('map');
+        return;
+      }
+      showScreen(name);
+    });
+  });
+  screenPanels.forEach(function (panel) {
+    panel.addEventListener('click', function (ev) {
+      if (ev.target === panel || ev.target.closest('[data-close-screen]')) closeScreen();
+    });
+    panel.addEventListener('keydown', function (ev) {
+      if (ev.key === 'Escape') { closeScreen(); return; }
+      if (ev.key !== 'Tab') return;
+      var focusable = Array.prototype.slice.call(panel.querySelectorAll('button:not(:disabled), input:not(:disabled), [href], [tabindex]:not([tabindex="-1"])'))
+        .filter(function (node) { return node.getClientRects().length > 0; });
+      if (!focusable.length) return;
+      var first = focusable[0], last = focusable[focusable.length - 1];
+      if (ev.shiftKey && document.activeElement === first) { ev.preventDefault(); last.focus(); }
+      else if (!ev.shiftKey && document.activeElement === last) { ev.preventDefault(); first.focus(); }
+    });
+  });
+  $('#profileName').addEventListener('input', function (ev) {
+    S.profile.name = ev.target.value.slice(0, 24);
+    var name = S.profile.name.trim() || TITLES[Math.min(level() - 1, TITLES.length - 1)];
+    $('#profileLevel').textContent = name + ' · Level ' + level();
+    save();
+  });
+  $('#profileAvatarChoice').addEventListener('change', function (ev) {
+    S.profile.avatar = ev.target.value;
+    $('#profileAvatar').textContent = S.profile.avatar;
+    save();
+  });
+  [['#shareLocation', 'shareLocation'], ['#approxLocation', 'approximateLocation'], ['#locationAudience', 'audience']].forEach(function (setting) {
+    $(setting[0]).addEventListener('change', function (ev) {
+      S.profile[setting[1]] = ev.target.type === 'checkbox' ? ev.target.checked : ev.target.value;
+      save();
+      window.dispatchEvent(new CustomEvent('viseu:location-preference', {
+        detail: {
+          enabled: S.profile.shareLocation,
+          approximate: S.profile.approximateLocation
+        }
+      }));
+    });
+  });
+  window.dispatchEvent(new CustomEvent('viseu:location-preference', {
+    detail: {
+      enabled: S.profile.shareLocation,
+      approximate: S.profile.approximateLocation
+    }
+  }));
+  $('#healthInfo').addEventListener('click', function () {
+    $('#healthInfo').textContent = 'Health sync is not available in this web app. No health data is collected.';
+  });
+  $('#dailyCheckin').addEventListener('click', claimCheckin);
+  $('#dailyChallenges').addEventListener('click', function (ev) {
+    var button = ev.target.closest('[data-daily-claim]');
+    if (button) claimDailyChallenge(button.getAttribute('data-daily-claim'));
+  });
+  $('#trailList').addEventListener('click', function (ev) {
+    var button = ev.target.closest('[data-trail-claim]');
+    if (button) claimTrail(button.getAttribute('data-trail-claim'));
+  });
+  $('#mapFullscreenClose').addEventListener('click', function () { setMapFullscreen(false); });
+  window.addEventListener('viseu:screenchange', function (ev) {
+    screenOpen = Boolean(ev.detail && ev.detail.open);
+    syncGameLoop();
+  });
   map.addEventListener('pointerdown', function (ev) {
-    if (modalOpen) return;
+    if (modalOpen || screenOpen) return;
+    if (!mapFullscreen) { setMapFullscreen(true); return; }
     var p = svgPoint(ev), best = null, bd = 48;
     SPOTS.forEach(function (s) { var d = Math.hypot(s.x - p.x, s.y - p.y); if (d < bd) { bd = d; best = s; } });
     if (best) walkTo(best.x, best.y + 44); else walkTo(p.x, p.y);
@@ -362,6 +773,8 @@ registerSW({ immediate: true });
   var KEYMAP = { ArrowLeft: 'l', a: 'l', A: 'l', ArrowRight: 'r', d: 'r', D: 'r', ArrowUp: 'u', w: 'u', W: 'u', ArrowDown: 'd', s: 'd', S: 'd' };
   window.addEventListener('keydown', function (e) {
     if (modalOpen) { if (e.key === 'Escape') closeModal(); return; }
+    if (e.key === 'Escape' && mapFullscreen) { setMapFullscreen(false); return; }
+    if (screenOpen) return;
     var k = KEYMAP[e.key]; if (!k) return;
     if (document.activeElement && /INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)) return;
     keys[k] = true; e.preventDefault();
@@ -369,11 +782,12 @@ registerSW({ immediate: true });
   window.addEventListener('keyup', function (e) { var k = KEYMAP[e.key]; if (k) keys[k] = false; });
   window.addEventListener('blur', function () { keys = {}; });
 
-  var last = 0;
+  var last = 0, frameRequest = 0;
   function frame(t) {
-    requestAnimationFrame(frame);
+    frameRequest = 0;
+    if (modalOpen || screenOpen || document.hidden) return;
+    frameRequest = requestAnimationFrame(frame);
     var dt = Math.min(.05, (t - last) / 1000 || 0); last = t;
-    if (modalOpen || document.hidden) return;
     var vx = (keys.r ? 1 : 0) - (keys.l ? 1 : 0), vy = (keys.d ? 1 : 0) - (keys.u ? 1 : 0), moving = false;
     if (vx || vy) {
       var l = Math.hypot(vx, vy); target = null; ping.setAttribute('display', 'none');
@@ -401,11 +815,24 @@ registerSW({ immediate: true });
       if (Math.hypot(it.x - me.x, it.y - me.y) < 26) collect(it);
     });
   }
-  requestAnimationFrame(frame);
+  function syncGameLoop() {
+    if (modalOpen || screenOpen || document.hidden) {
+      if (frameRequest) cancelAnimationFrame(frameRequest);
+      frameRequest = 0;
+      last = 0;
+      keys = {};
+      return;
+    }
+    if (!frameRequest) frameRequest = requestAnimationFrame(frame);
+  }
+  document.addEventListener('visibilitychange', syncGameLoop);
+  syncGameLoop();
 
   function collect(it) {
+    rollDaily();
     var v = it.t === 'dice' ? 2 + Math.floor(Math.random() * 11) : it.v;
-    S.got[it.id] = 1; S.coins += v; S.items[it.t] = (S.items[it.t] || 0) + 1; save();
+    S.got[it.id] = 1; S.coins += v; S.items[it.t] = (S.items[it.t] || 0) + 1;
+    S.daily.stats.pickups += 1; save();
     itemEls[it.id].setAttribute('display', 'none');
     popText(it.x, it.y, '+' + v, it.t === 'coin' ? '#e59a00' : '#7a5cff');
     burst(it.x, it.y, it.t === 'coin' ? '#ffc93c' : '#7a5cff');
@@ -468,16 +895,25 @@ registerSW({ immediate: true });
     var act = b.getAttribute('data-act');
     if (act === 'buy' || act === 'equip') { skinAct(act, b.getAttribute('data-id')); return; }
     var s = SPOTS.filter(function (x) { return x.id === b.getAttribute('data-id'); })[0]; if (!s) return;
-    if (b.getAttribute('data-act') === 'go') { walkTo(s.x, s.y + 44); window.scrollTo({ top: 0, behavior: RM ? 'auto' : 'smooth' }); }
+    if (b.getAttribute('data-act') === 'go') {
+      if (activeScreen) closeScreen();
+      walkTo(s.x, s.y + 44);
+      window.scrollTo({ top: 0, behavior: RM ? 'auto' : 'smooth' });
+    }
     else if (b.getAttribute('data-act') === 'open') openSpot(s);
   });
 
   /* ---------- Modal ---------- */
   var modal = $('#modal'), mBody = $('#mBody'), pendingCelebrate = [];
-  function openModal() { modalOpen = true; modal.hidden = false; keys = {}; setTimeout(function () { var f = modal.querySelector('.btn, .opt'); if (f) f.focus(); }, 30); }
+  function flushPendingCelebrate() {
+    while (pendingCelebrate.length) celebrate(pendingCelebrate.shift());
+  }
+  function openModal() { modalOpen = true; modal.hidden = false; keys = {}; syncGameLoop(); setTimeout(function () { var f = modal.querySelector('.btn, .opt'); if (f) f.focus(); }, 30); }
   function closeModal() {
     modal.hidden = true; modalOpen = false; renderDock(); renderGrid(); renderHud(); renderItems();
-    while (pendingCelebrate.length) celebrate(pendingCelebrate.shift());
+    renderDaily(); renderTrails();
+    syncGameLoop();
+    flushPendingCelebrate();
     map.focus({ preventScroll: true });
   }
   $('#mClose').addEventListener('click', closeModal);
@@ -490,7 +926,8 @@ registerSW({ immediate: true });
   function openSpot(s) {
     var first = !S.stamps[s.id];
     if (first) {
-      S.stamps[s.id] = 1; S.coins += 10; addXp(40);
+      rollDaily();
+      S.stamps[s.id] = 1; S.daily.stats.stamps += 1; S.coins += 10; addXp(40);
       S.items[PRIZE[s.id]] = (S.items[PRIZE[s.id]] || 0) + 1;
       spotEls[s.id].classList.add('done');
       var n = stampCount();
@@ -535,6 +972,8 @@ registerSW({ immediate: true });
         if (done) return; done = true;
         var i = +b.getAttribute('data-i'), ok = i === s.a;
         mBody.querySelectorAll('.opt').forEach(function (x, j) { x.disabled = true; if (j === s.a) x.classList.add('right'); });
+        rollDaily();
+        if (!S.quiz[s.id]) S.daily.stats.quizzes += 1;
         if (ok) { b.classList.add('right'); S.coins += 20; addXp(20); S.quiz[s.id] = 1; $('#fb').textContent = 'Correct! +20 coins and +20 XP'; blip([784, 988, 1318], .09); confetti(50); }
         else { b.classList.add('wrong'); S.quiz[s.id] = 1; $('#fb').textContent = 'Not quite. The answer glows green.'; blip([300, 220], .12); }
         save(); renderHud();
@@ -589,10 +1028,17 @@ registerSW({ immediate: true });
   function applySkin() { var k = skinById(S.skin); hatA.setAttribute('fill', k.hat); hatB.setAttribute('fill', k.hat); }
   function renderItems() {
     var order = ['coin', 'grape', 'chestnut', 'tile', 'flower', 'shield', 'dice', 'compass', 'token'];
-    $('#colCount').textContent = Object.keys(S.got).length + ' of ' + ITEMS.length + ' picked up on the map';
+    $('#colCount').textContent = Object.keys(S.got).length + ' of ' + (ITEMS.length + CITY_MAP_ITEMS.length) + ' picked up on the map';
     $('#items').innerHTML = order.map(function (t) {
       var n = S.items[t] || 0;
       return '<div class="card' + (n ? ' got' : '') + '"><svg class="st' + (n ? '' : ' locked') + '" viewBox="-16 -16 32 32" aria-hidden="true">' + itemIcon(t) + '</svg><div><h3>' + TYPES[t] + '</h3><p>' + (n ? '× ' + n : 'Not found yet') + '</p></div></div>';
+    }).join('');
+    var discovered = CITY_MAP_ITEMS.filter(function (item) { return S.got[item.id]; }).length;
+    $('#cityDiscoveryCount').textContent = discovered + ' of ' + CITY_MAP_ITEMS.length + ' discovered';
+    $('#cityDiscoveryList').innerHTML = CITY_MAP_ITEMS.map(function (item) {
+      var found = Boolean(S.got[item.id]);
+      return '<div class="city-discovery-card' + (found ? ' is-found' : '') + '"><span class="city-discovery-icon" aria-hidden="true">' + (found ? '✓' : '✦') + '</span>' +
+        '<span class="city-discovery-name">' + item.name + '</span><span class="city-discovery-status">' + (found ? 'Discovered' : 'Not found') + '</span></div>';
     }).join('');
   }
   function renderShop() {

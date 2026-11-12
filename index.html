@@ -32,43 +32,140 @@
 
   <div class="mapframe">
     <svg id="map" viewBox="0 0 1000 680" role="application" tabindex="0" aria-label="Stylised map of Viseu. Tap a place to walk there, or use the arrow keys."></svg>
-    <div class="hint">Tap the map to walk, or use arrow keys. Stylised map, not to scale.</div>
+    <div id="cityMap" class="city-map" role="application" aria-label="Interactive street map centered on Viseu" hidden></div>
+    <div class="hint" id="mapHint">Tap the map to explore in full screen. Stylised map, not to scale.</div>
+    <div class="city-map-controls">
+      <button id="mapModeToggle" class="city-map-mode-toggle" type="button">Use game map</button>
+      <div class="city-map-location-tools">
+        <button id="locateUser" class="city-map-locate" type="button" aria-pressed="false">Locate me</button>
+        <p id="cityMapLocationStatus" class="city-map-location-status" role="status" aria-live="polite">Location is off. Your position is not shown.</p>
+        <p id="cityMapNetworkStatus" class="city-map-network-status"></p>
+      </div>
+    </div>
+    <button class="map-fullscreen-close" id="mapFullscreenClose" type="button" aria-label="Close full-screen map" hidden>
+      <span aria-hidden="true">&times;</span><span>Close map</span>
+    </button>
   </div>
 
   <section class="dock" id="dock" aria-live="polite"></section>
-
-  <section class="passport" aria-labelledby="pp">
-    <header><h2 id="pp">Viseu passport</h2><span id="ppCount">0 of 8 stamps</span></header>
-    <div class="grid" id="grid"></div>
-  </section>
-
-  <section class="passport" aria-labelledby="col">
-    <header><h2 id="col">Collection</h2><span id="colCount"></span></header>
-    <div class="grid" id="items"></div>
-  </section>
-
-  <section class="passport" aria-labelledby="shp">
-    <header><h2 id="shp">Avatar shop</h2><span id="shopMsg" aria-live="polite">Spend your Viseu coins</span></header>
-    <div class="grid" id="shop"></div>
-  </section>
-
-  <section class="passport studio-shop-launch" aria-labelledby="studioShopHeading">
-    <div>
-      <span class="studio-eyebrow">MADE IN VISEU</span>
-      <h2 id="studioShopHeading">Studio Shop</h2>
-      <p>Collect artist-made themes, badges, and boosts for your next adventure.</p>
-    </div>
-    <button class="btn studio-open-button" id="studioShopOpen" type="button" aria-haspopup="dialog" aria-expanded="false" aria-controls="studioShopDrawer">
-      Explore creations
-    </button>
-  </section>
-
   <div class="foot">
     <span class="mbv">Made in Viseu, Portugal</span>
-    <span>Adventure progress stays in this browser; Studio purchases sync to your account.</span>
     <button type="button" id="reset">Start over</button>
   </div>
 </div>
+
+<div class="screen-overlay" id="passportScreen" data-screen-panel="passport" hidden>
+  <section class="screen-sheet" role="dialog" aria-modal="true" aria-labelledby="passportScreenTitle">
+    <header class="screen-header">
+      <div><span class="screen-eyebrow">YOUR ADVENTURE</span><h2 id="passportScreenTitle">Viseu Passport</h2></div>
+      <button class="screen-close" type="button" data-close-screen aria-label="Close passport">&times;</button>
+    </header>
+    <section class="passport" aria-labelledby="pp">
+      <header><h2 id="pp">Viseu passport</h2><span id="ppCount">0 of 8 stamps</span></header>
+      <div class="grid" id="grid"></div>
+    </section>
+  </section>
+</div>
+<div class="screen-overlay" id="profileScreen" data-screen-panel="profile" hidden>
+  <section class="screen-sheet" role="dialog" aria-modal="true" aria-labelledby="profileScreenTitle">
+    <header class="screen-header">
+      <div><span class="screen-eyebrow">YOUR ADVENTURE</span><h2 id="profileScreenTitle">Your Profile</h2></div>
+      <button class="screen-close" type="button" data-close-screen aria-label="Close profile">&times;</button>
+    </header>
+    <section class="passport profile-card" aria-label="Profile identity">
+      <div class="profile-avatar" id="profileAvatar" aria-hidden="true">🧭</div>
+      <div class="profile-identity">
+        <label for="profileName">Explorer name</label>
+        <input id="profileName" type="text" maxlength="24" autocomplete="nickname" placeholder="Curious Visitor">
+        <span class="profile-level" id="profileLevel">Curious Visitor · Level 1</span>
+        <label for="profileAvatarChoice">Profile badge</label>
+        <select id="profileAvatarChoice" aria-label="Choose profile badge">
+          <option value="🧭">Compass</option><option value="⭐">Star</option><option value="🌿">Leaf</option><option value="🏰">Castle</option>
+        </select>
+      </div>
+    </section>
+    <section class="passport profile-settings" aria-labelledby="privacyTitle">
+      <header><h2 id="privacyTitle">Map &amp; privacy</h2><span>Saved on this device</span></header>
+      <label class="setting-row"><span><strong>Allow location on city map</strong><small>Off by default. Location is requested only when you tap “Locate me” and stays on this device.</small></span><input id="shareLocation" type="checkbox"></label>
+      <label class="setting-row"><span><strong>Approximate location</strong><small>Show a coarse area instead of your precise position.</small></span><input id="approxLocation" type="checkbox"></label>
+      <label class="setting-row setting-select"><span><strong>Who can see you?</strong><small>Preference for a future friends feature.</small></span><select id="locationAudience"><option value="private">Only me</option><option value="friends">Friends</option><option value="selected">Selected friends</option></select></label>
+    </section>
+    <section class="passport profile-settings" aria-labelledby="healthTitle">
+      <header><h2 id="healthTitle">Steps &amp; reminders</h2></header>
+      <p class="profile-note">Step syncing needs Apple Health or Health Connect and a native companion. GPS is used only on the city map after you opt in; it is not saved or sent to Viseu Quest.</p>
+      <button class="btn ghost" id="healthInfo" type="button">View health-sync setup</button>
+    </section>
+  </section>
+</div>
+<div class="screen-overlay" id="trailsScreen" data-screen-panel="trails" hidden>
+  <section class="screen-sheet" role="dialog" aria-modal="true" aria-labelledby="trailsScreenTitle">
+    <header class="screen-header">
+      <div><span class="screen-eyebrow">DESCUBRIR VISEU</span><h2 id="trailsScreenTitle">Rotas de Viseu</h2>      <p class="trails-intro">Complete trail challenges with the places, quizzes, and collectibles in this game. No steps or GPS are tracked.</p></div>
+      <button class="screen-close" type="button" data-close-screen aria-label="Close trails">&times;</button>
+    </header>
+    <section class="passport daily-passport" aria-labelledby="dailyTitle">
+      <header><h2 id="dailyTitle">Today's adventure</h2><span id="streakCount">0-day streak</span></header>
+      <div class="daily-checkin">
+        <div><strong id="dailyHeadline">A little progress adds up</strong><p id="dailySubline">Check in when you are ready. No streak loss or penalty.</p></div>
+        <button class="btn go" id="dailyCheckin" type="button">Claim check-in</button>
+      </div>
+      <div class="daily-challenges" id="dailyChallenges"></div>
+    </section>
+    <div class="trail-list" id="trailList"></div>
+  </section>
+</div>
+<div class="screen-overlay" id="collectionScreen" data-screen-panel="collection" hidden>
+  <section class="screen-sheet" role="dialog" aria-modal="true" aria-labelledby="collectionScreenTitle">
+    <header class="screen-header">
+      <div><span class="screen-eyebrow">YOUR ADVENTURE</span><h2 id="collectionScreenTitle">Collection</h2></div>
+      <button class="screen-close" type="button" data-close-screen aria-label="Close collection">&times;</button>
+    </header>
+    <section class="passport" aria-labelledby="col">
+      <header><h2 id="col">Collection</h2><span id="colCount"></span></header>
+      <div class="grid" id="items"></div>
+      <section class="city-discoveries" aria-labelledby="cityDiscoveriesTitle">
+        <header><h3 id="cityDiscoveriesTitle">City map discoveries</h3><span id="cityDiscoveryCount"></span></header>
+        <div id="cityDiscoveryList" class="city-discovery-list"></div>
+      </section>
+    </section>
+  </section>
+</div>
+<div class="screen-overlay" id="avatarScreen" data-screen-panel="avatar" hidden>
+  <section class="screen-sheet" role="dialog" aria-modal="true" aria-labelledby="avatarScreenTitle">
+    <header class="screen-header">
+      <div><span class="screen-eyebrow">CUSTOMIZE YOUR EXPLORER</span><h2 id="avatarScreenTitle">Avatar Shop</h2></div>
+      <button class="screen-close" type="button" data-close-screen aria-label="Close avatar shop">&times;</button>
+    </header>
+    <section class="passport" aria-labelledby="shp">
+      <header><h2 id="shp">Avatar shop</h2><span id="shopMsg" aria-live="polite">Spend your Viseu coins</span></header>
+      <div class="grid" id="shop"></div>
+    </section>
+  </section>
+</div>
+
+<nav class="bottom-nav" id="bottomNav" aria-label="Main navigation">
+  <button class="bottom-nav-item is-active" id="navMap" type="button" data-nav="map" aria-label="Map" aria-current="page">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m3 6 6-3 6 3 6-3v15l-6 3-6-3-6 3V6Z"/><path d="M9 3v15m6-12v15"/></svg><span>Map</span>
+  </button>
+  <button class="bottom-nav-item" id="navProfile" type="button" data-nav="profile" aria-label="Profile">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0M18 3l1.2 2.4L22 6l-2.8.6L18 9l-1.2-2.4L14 6l2.8-.6L18 3Z"/></svg><span>Profile</span>
+  </button>
+  <button class="bottom-nav-item" id="navTrails" type="button" data-nav="trails" aria-label="Viseu Trails">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20 9 5l4 14 3-9 4 10"/><circle cx="9" cy="5" r="2"/><circle cx="16" cy="10" r="2"/></svg><span>Trails</span>
+  </button>
+  <button class="bottom-nav-item" id="navPassport" type="button" data-nav="passport" aria-label="Passport">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h14a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M8 3v18m4-13h5m-5 4h5m-5 4h3"/></svg><span>Passport</span>
+  </button>
+  <button class="bottom-nav-item" id="navCollection" type="button" data-nav="collection" aria-label="Collection">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H20v16H6.5A2.5 2.5 0 0 0 4 21V5.5Z"/><path d="M4 6h13m-8 4 2 2 4-4"/></svg><span>Collection</span>
+  </button>
+  <button class="bottom-nav-item" id="navAvatar" type="button" data-nav="avatar" aria-label="Avatar shop">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0M5 5l2 2m12-2-2 2"/></svg><span>Avatar</span>
+  </button>
+  <button class="bottom-nav-item" id="navStudio" type="button" data-nav="studio" aria-label="Studio Shop" aria-haspopup="dialog" aria-expanded="false" aria-controls="studioShopDrawer">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 2 2.4 6.2L21 11l-6.6 2.8L12 20l-2.4-6.2L3 11l6.6-2.8L12 2Z"/><path d="m19 15 .9 2.1L22 18l-2.1.9L19 21l-.9-2.1L16 18l2.1-.9L19 15Z"/></svg><span>Studio</span>
+  </button>
+</nav>
 
 <div class="overlay" id="modal" hidden>
   <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="mTitle">
