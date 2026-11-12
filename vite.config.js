@@ -9,14 +9,30 @@ export default defineConfig({
       registerType: 'autoUpdate',
       manifestFilename: 'manifest.json',
       manifest: {
+        id: '/',
         name: 'Viseu Quest',
         short_name: 'Viseu Quest',
         description: 'Walk the old town, check in at landmarks, and collect stamps.',
+        start_url: '/',
+        scope: '/',
         theme_color: '#d9f3ff',
         background_color: '#fff6e0',
         display: 'standalone',
-        orientation: 'any',
+        display_override: ['window-controls-overlay', 'standalone'],
+        orientation: 'portrait-primary',
         icons: [
+          {
+            src: '/icons/icon-192.png',
+            sizes: '192x192',
+            type: 'image/png',
+            purpose: 'any maskable'
+          },
+          {
+            src: '/icons/icon-512.png',
+            sizes: '512x512',
+            type: 'image/png',
+            purpose: 'any maskable'
+          },
           {
             src: '/icons/icon-192.svg',
             sizes: '192x192',
