@@ -1,0 +1,15 @@
+Convert the following single-file HTML/CSS/JS app ("Viseu Quest") into a clean, production-ready Vite Progressive Web App (PWA) so it can be installed on mobile devices and run offline.
+
+### Instructions:
+1. Keep all existing visual styling, custom SVG/Canvas map artwork, landmark data, avatar mechanics, shop items, and localStorage keys intact without losing any functionality.
+2. Structure the project cleanly using Vite (vanilla JS or React/TypeScript—choose whichever preserves my existing DOM/Canvas logic most faithfully without breaking anything).
+3. Install and configure `vite-plugin-pwa`:
+   - Set `registerType: 'autoUpdate'`.
+   - Generate a complete `manifest.json` with app name "Viseu Quest", short_name "Viseu Quest", standalone display mode, and matching theme/background colors from my CSS.
+   - Generate clean app icons (`192x192` and `512x512` PNG/SVG) matching the Viseu Quest theme so the PWA passes mobile installability checks.
+   - Configure Workbox caching so the app works 100% offline after the first visit.
+4. Ensure mobile viewport settings (`user-scalable=no` or smooth touch handling) prevent accidental page bouncing while tapping the map.
+
+Here is my existing HTML file:
+
+[PASTE YOUR FULL HTML CODE HERE]
